@@ -1,0 +1,54 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('participants', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('room_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->string('name');
+
+            $table->string('code', 50);
+
+            $table->string('status')
+                ->default('waiting');
+
+            $table->foreignId('eliminated_question_id')
+                ->nullable()
+                ->constrained('questions')
+                ->nullOnDelete();
+
+            $table->timestamp('joined_at')
+                ->nullable();
+
+            $table->timestamp('eliminated_at')
+                ->nullable();
+
+            $table->timestamps();
+
+            $table->unique([
+                'room_id',
+                'code',
+            ]);
+
+            $table->index([
+                'room_id',
+                'status',
+            ]);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('participants');
+    }
+};

@@ -1,0 +1,248 @@
+<script setup lang="ts">
+    import SiOneLogo from '@/components/SiOneLogo.vue'
+
+    import { Head, Link } from '@inertiajs/vue3'
+
+    const currentYear = new Date().getFullYear()
+</script>
+
+<template>
+
+    <Head title="SiOne — Sistem Ranking Satu" />
+
+    <div class="relative flex min-h-svh flex-col overflow-hidden bg-slate-50 text-slate-900">
+        <!-- Background -->
+        <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+            <div
+                class="absolute -left-28 -top-28 h-72 w-72 rounded-full bg-sione-primary/10 blur-3xl sm:h-96 sm:w-96" />
+
+            <div
+                class="absolute -right-28 top-1/3 h-72 w-72 rounded-full bg-sione-violet/10 blur-3xl sm:h-96 sm:w-96" />
+
+            <div class="absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl sm:h-96 sm:w-96" />
+
+            <!-- Grid -->
+            <div
+                class="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:32px_32px] opacity-30 [mask-image:linear-gradient(to_bottom,white,transparent_78%)]" />
+        </div>
+
+        <!-- Header -->
+        <header class="relative z-20">
+            <div class="mx-auto flex h-18 w-full max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
+                <!-- Brand -->
+                <a href="#" class="flex items-center gap-3">
+                    <SiOneLogo size="h-10 w-10 sm:h-11 sm:w-11" />
+
+                    <div>
+                        <div class="font-extrabold tracking-tight text-slate-950">
+                            SiOne
+                        </div>
+
+                        <div class="text-[11px] font-medium text-slate-500">
+                            Sistem Ranking Satu
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Admin -->
+                <Link :href="$page.props.auth?.user ? '/admin' : '/login'"
+                    class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-3.5 text-sm font-semibold text-slate-600 shadow-sm backdrop-blur transition duration-200 hover:border-indigo-200 hover:bg-white hover:text-indigo-600 hover:shadow-md focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-4">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+
+                        <polyline points="10 17 15 12 10 7" />
+
+                        <line x1="15" x2="3" y1="12" y2="12" />
+                    </svg>
+
+                    <span>
+                        {{
+                            $page.props.auth?.user
+                                ? 'Dashboard Admin'
+                                : 'Login Admin'
+                        }}
+                    </span>
+                </Link>
+            </div>
+        </header>
+
+        <!-- Main -->
+        <main class="relative z-10 flex flex-1 items-center">
+            <div
+                class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-8 sm:px-6 sm:py-12 md:gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:items-center lg:gap-16 lg:px-8 lg:py-16 xl:gap-24">
+                <!-- Hero -->
+                <section class="mx-auto w-full max-w-2xl text-center lg:mx-0 lg:text-left">
+                    <!-- Badge -->
+                    <div
+                        class="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/90 px-3.5 py-2 text-xs font-bold text-indigo-600 shadow-sm backdrop-blur">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-500 opacity-40" />
+
+                            <span class="relative inline-flex h-2 w-2 rounded-full bg-cyan-500" />
+                        </span>
+
+                        Kompetisi interaktif secara real-time
+                    </div>
+
+                    <!-- Heading -->
+                    <h1
+                        class="mt-6 text-[2.5rem] font-black leading-[1.05] tracking-[-0.045em] text-slate-950 sm:text-5xl md:text-[3.5rem] lg:text-[3.8rem] xl:text-[4.25rem]">
+                        Satu soal.
+
+                        <br class="hidden sm:block" />
+
+                        Satu kesempatan.
+
+                        <span class="mt-1 block text-indigo-600">
+                            Jadilah SiOne.
+                        </span>
+                    </h1>
+
+                    <p
+                        class="mx-auto mt-5 max-w-xl text-[15px] leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8 lg:mx-0">
+                        Jawab dengan tepat, bertahan di setiap ronde, dan
+                        buktikan bahwa kamu layak menjadi peserta terakhir
+                        yang berdiri.
+                    </p>
+
+                    <!-- Highlights -->
+                    <div
+                        class="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-sm font-medium text-slate-500 sm:mt-8 lg:justify-start">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                    aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </div>
+
+                            Tanpa akun peserta
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                    aria-hidden="true">
+                                    <path d="M13 2 3 14h9l-1 8 10-12h-9z" />
+                                </svg>
+                            </div>
+
+                            Real-time
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <div class="flex h-5 w-5 items-center justify-center rounded-full bg-cyan-50 text-cyan-600">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                    aria-hidden="true">
+                                    <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+
+                                    <path d="M12 18h.01" />
+                                </svg>
+                            </div>
+
+                            Semua perangkat
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Participant Access -->
+                <section class="mx-auto w-full max-w-xl lg:max-w-none">
+                    <div
+                        class="relative overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/90 p-5 shadow-2xl shadow-slate-300/40 backdrop-blur-xl sm:p-7 lg:p-8">
+                        <!-- Top accent -->
+                        <div
+                            class="absolute left-1/2 top-0 h-1 w-24 -translate-x-1/2 rounded-b-full bg-linear-to-r from-sione-primary via-sione-violet to-sione-cyan" />
+
+                        <!-- Icon -->
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 sm:h-14 sm:w-14">
+                            <svg class="h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+
+                                <circle cx="9" cy="7" r="4" />
+
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                        </div>
+
+                        <!-- Heading -->
+                        <div class="mt-5">
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+                                Untuk Peserta
+                            </p>
+
+                            <h2 class="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+                                Siap untuk bermain?
+                            </h2>
+
+                            <p class="mt-2 max-w-md text-sm leading-6 text-slate-500 sm:text-base sm:leading-7">
+                                Masuk ke ruang permainan menggunakan kode room
+                                yang diberikan oleh panitia.
+                            </p>
+                        </div>
+
+                        <!-- CTA -->
+                        <Link href="/participant"
+                            class="group mt-7 flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl bg-indigo-600 px-5 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200/70 transition duration-200 hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-200 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-2 sm:min-h-16 sm:text-lg">
+                            <span>
+                                Masuk sebagai Peserta
+                            </span>
+
+                            <svg class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M5 12h14" />
+                                <path d="m13 6 6 6-6 6" />
+                            </svg>
+                        </Link>
+
+                        <!-- Help -->
+                        <div
+                            class="mt-5 flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3.5">
+                            <div
+                                class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-sm">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10" />
+
+                                    <path d="M12 16v-4" />
+
+                                    <path d="M12 8h.01" />
+                                </svg>
+                            </div>
+
+                            <p class="text-xs leading-5 text-slate-500 sm:text-[13px]">
+                                Tidak perlu membuat akun. Kamu hanya
+                                membutuhkan kode room untuk bergabung.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="relative z-10">
+            <div
+                class="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 border-t border-slate-200/70 px-4 py-5 text-center text-xs text-slate-400 sm:flex-row sm:px-6 sm:text-left lg:px-8">
+                <span>
+                    © {{ currentYear }} SiOne
+                </span>
+
+                <span>
+                    Sistem Ranking Satu Interaktif
+                </span>
+            </div>
+        </footer>
+    </div>
+</template>
