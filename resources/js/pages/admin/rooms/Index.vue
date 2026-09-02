@@ -1,6 +1,9 @@
 <script setup lang="ts">
     import AdminLayout from '@/layouts/admin/AdminLayout.vue'
     import type { Room } from '@/types/room'
+    import {
+        useConfirm,
+    } from '@/composables/useConfirm'
 
     import {
         Head,
@@ -12,31 +15,48 @@
         rooms: Room[]
     }>()
 
+    const {
+        askConfirm,
+    } = useConfirm()
     /*
     |--------------------------------------------------------------------------
     | Delete Room
     |--------------------------------------------------------------------------
     */
 
-    const deleteRoom = (
-        room: Room,
-    ) => {
-        const confirmed =
-            window.confirm(
-                `Hapus room "${room.name}"?`,
+    const deleteRoom =
+        async (
+            room: Room,
+        ) => {
+            const confirmed =
+                await askConfirm({
+                    title:
+                        'Hapus Room?',
+
+                    description:
+                        `Room "${room.name}" dan seluruh data yang terkait akan dihapus secara permanen.`,
+
+                    confirmText:
+                        'Hapus Room',
+
+                    cancelText:
+                        'Batal',
+
+                    tone:
+                        'danger',
+                })
+
+            if (!confirmed) {
+                return
+            }
+
+            router.delete(
+                `/admin/rooms/${room.id}`,
+                {
+                    preserveScroll: true,
+                },
             )
-
-        if (!confirmed) {
-            return
         }
-
-        router.delete(
-            `/admin/rooms/${room.id}`,
-            {
-                preserveScroll: true,
-            },
-        )
-    }
 
     /*
     |--------------------------------------------------------------------------
@@ -44,26 +64,36 @@
     |--------------------------------------------------------------------------
     */
 
-    const duplicateRoom = (
-        room: Room,
-    ) => {
-        const confirmed =
-            window.confirm(
-                `Duplikat room "${room.name}" beserta seluruh soal dan pilihan jawabannya?`,
+    const duplicateRoom =
+        async (
+            room: Room,
+        ) => {
+            const confirmed =
+                await askConfirm({
+                    title:
+                        'Duplikat Room?',
+
+                    description:
+                        `Salinan baru dari "${room.name}" akan dibuat beserta seluruh soal. Peserta dan jawaban pertandingan tidak ikut disalin.`,
+
+                    confirmText:
+                        'Duplikat Room',
+
+                    cancelText:
+                        'Batal',
+
+                    tone:
+                        'primary',
+                })
+
+            if (!confirmed) {
+                return
+            }
+
+            router.post(
+                `/admin/rooms/${room.id}/duplicate`,
             )
-
-        if (!confirmed) {
-            return
         }
-
-        router.post(
-            `/admin/rooms/${room.id}/duplicate`,
-            {},
-            {
-                preserveScroll: true,
-            },
-        )
-    }
 
     /*
     |--------------------------------------------------------------------------

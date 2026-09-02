@@ -52,6 +52,48 @@ export interface RoomFormData {
 
 /*
 |--------------------------------------------------------------------------
+| Question Pagination
+|--------------------------------------------------------------------------
+*/
+
+export interface QuestionPaginationLink {
+    url: string | null
+    label: string
+    active: boolean
+}
+
+export interface PaginatedQuestions {
+    current_page: number
+
+    data: Question[]
+
+    first_page_url: string
+    from: number | null
+
+    last_page: number
+    last_page_url: string
+
+    links: QuestionPaginationLink[]
+
+    next_page_url: string | null
+
+    path: string
+
+    per_page: number
+
+    prev_page_url: string | null
+
+    to: number | null
+
+    total: number
+}
+
+export interface QuestionFilters {
+    search: string
+}
+
+/*
+|--------------------------------------------------------------------------
 | Editable / Viewable Room
 |--------------------------------------------------------------------------
 */
@@ -59,7 +101,12 @@ export interface RoomFormData {
 export interface EditableRoom extends Room {
     can_edit: boolean
     can_edit_questions: boolean
-    questions: Question[]
+
+    question_count: number
+
+    questions: PaginatedQuestions
+
+    question_filters: QuestionFilters
 }
 
 /*

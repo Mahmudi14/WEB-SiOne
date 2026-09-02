@@ -6,6 +6,9 @@ use App\Enums\RoomStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreQuestionRequest;
 use App\Http\Requests\Admin\UpdateQuestionRequest;
+use App\Actions\Room\ImportQuestionsAction;
+use App\Http\Requests\Admin\ImportQuestionsRequest;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\Question;
 use App\Models\Room;
 use Illuminate\Http\RedirectResponse;
@@ -251,6 +254,90 @@ class RoomQuestionController extends Controller
             (int) $question->room_id ===
                 (int) $room->id,
             404,
+        );
+    }
+
+    public function import(
+        ImportQuestionsRequest $request,
+        Room $room,
+        ImportQuestionsAction $action,
+    ): RedirectResponse {
+        $this->ensureEditable(
+            $room,
+        );
+
+        $count = $action->execute(
+            $room,
+            $request->file('file'),
+        );
+
+        return back()->with(
+            'success',
+            "{$count} soal berhasil diimpor dari CSV.",
+        );
+    }
+
+    public function downloadImportTemplate(): StreamedResponse
+    {
+        return response()->streamDownload(
+            function () {
+                $handle = fopen(
+                    'php://output',
+                    'w',
+                );
+
+                /*
+             * UTF-8 BOM agar Excel membaca
+             * karakter Indonesia dengan baik.
+             */
+                fwrite(
+                    $handle,
+                    "\xEF\xBB\xBF",
+                );
+
+                fputcsv(
+                    $handle,
+                    [
+                        'question',
+                        'option_a',
+                        'option_b',
+                        'option_c',
+                        'option_d',
+                        'correct_answer',
+                    ],
+                );
+
+                fputcsv(
+                    $handle,
+                    [
+                        'Ibukota Indonesia?',
+                        'Jakarta',
+                        'Bandung',
+                        'Surabaya',
+                        'Medan',
+                        'A',
+                    ],
+                );
+
+                fputcsv(
+                    $handle,
+                    [
+                        '2 + 2 = ?',
+                        '3',
+                        '4',
+                        '',
+                        '',
+                        'B',
+                    ],
+                );
+
+                fclose($handle);
+            },
+            'template-import-soal.csv',
+            [
+                'Content-Type' =>
+                'text/csv; charset=UTF-8',
+            ],
         );
     }
 }

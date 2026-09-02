@@ -58,14 +58,6 @@ Route::prefix('participant')
 |--------------------------------------------------------------------------
 */
 
-Route::middleware([
-    'auth',
-    'verified',
-])->get('/dashboard', function () {
-    return redirect()
-        ->route('admin.dashboard');
-})->name('dashboard');
-
 /*
 |--------------------------------------------------------------------------
 | Admin
@@ -89,7 +81,27 @@ Route::middleware('auth')
 
         /*
         |--------------------------------------------------------------------------
-        | Room CRUD
+        | Question Import Template
+        |--------------------------------------------------------------------------
+        |
+        | Route ini TIDAK membutuhkan room.
+        |
+        | URL:
+        | /admin/questions/import/template
+        |
+        */
+
+        Route::get(
+            'questions/import/template',
+            [
+                RoomQuestionController::class,
+                'downloadImportTemplate',
+            ],
+        )->name('questions.import.template');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Room Filters
         |--------------------------------------------------------------------------
         */
 
@@ -107,6 +119,12 @@ Route::middleware('auth')
             ->defaults('filter', 'finished')
             ->name('rooms.finished');
 
+        /*
+        |--------------------------------------------------------------------------
+        | Room CRUD
+        |--------------------------------------------------------------------------
+        */
+
         Route::resource(
             'rooms',
             RoomController::class,
@@ -121,9 +139,18 @@ Route::middleware('auth')
         Route::prefix('rooms/{room}')
             ->name('rooms.')
             ->group(function () {
+                /*
+                |--------------------------------------------------------------------------
+                | Duplicate
+                |--------------------------------------------------------------------------
+                */
+
                 Route::post(
                     '/duplicate',
-                    [RoomController::class, 'duplicate'],
+                    [
+                        RoomController::class,
+                        'duplicate',
+                    ],
                 )->name('duplicate');
 
                 /*
@@ -132,38 +159,49 @@ Route::middleware('auth')
                 |--------------------------------------------------------------------------
                 */
 
-                Route::controller(RoomGameController::class)
-                    ->group(function () {
-                        Route::get('/play', 'show')
-                            ->name('play');
+                Route::controller(
+                    RoomGameController::class,
+                )->group(function () {
+                    Route::get(
+                        '/play',
+                        'show',
+                    )->name('play');
 
-                        Route::get('/state', 'state')
-                            ->name('state');
+                    Route::get(
+                        '/state',
+                        'state',
+                    )->name('state');
 
-                        Route::post('/open', 'open')
-                            ->name('open');
+                    Route::post(
+                        '/open',
+                        'open',
+                    )->name('open');
 
-                        Route::post('/start', 'start')
-                            ->name('start');
+                    Route::post(
+                        '/start',
+                        'start',
+                    )->name('start');
 
-                        Route::post(
-                            '/question/open',
-                            'openQuestion',
-                        )->name('question.open');
+                    Route::post(
+                        '/question/open',
+                        'openQuestion',
+                    )->name('question.open');
 
-                        Route::post(
-                            '/question/close',
-                            'closeQuestion',
-                        )->name('question.close');
+                    Route::post(
+                        '/question/close',
+                        'closeQuestion',
+                    )->name('question.close');
 
-                        Route::post(
-                            '/question/next',
-                            'nextQuestion',
-                        )->name('question.next');
+                    Route::post(
+                        '/question/next',
+                        'nextQuestion',
+                    )->name('question.next');
 
-                        Route::post('/finish', 'finish')
-                            ->name('finish');
-                    });
+                    Route::post(
+                        '/finish',
+                        'finish',
+                    )->name('finish');
+                });
 
                 /*
                 |--------------------------------------------------------------------------
@@ -173,27 +211,66 @@ Route::middleware('auth')
 
                 Route::get(
                     '/result',
-                    [RoomResultController::class, 'show'],
+                    [
+                        RoomResultController::class,
+                        'show',
+                    ],
                 )->name('result');
 
                 /*
                 |--------------------------------------------------------------------------
-                | Question CRUD
+                | Questions
                 |--------------------------------------------------------------------------
+                |
+                | Karena kita sudah berada di:
+                |
+                | /admin/rooms/{room}
+                |
+                | maka di bawah cukup memakai:
+                |
+                | /questions/...
+                |
                 */
 
                 Route::prefix('questions')
                     ->name('questions.')
-                    ->controller(RoomQuestionController::class)
+                    ->controller(
+                        RoomQuestionController::class,
+                    )
                     ->group(function () {
-                        Route::post('/', 'store')
-                            ->name('store');
+                        /*
+                         * Import CSV
+                         *
+                         * POST
+                         * /admin/rooms/{room}/questions/import
+                         *
+                         * Name:
+                         * admin.rooms.questions.import
+                         */
+                        Route::post(
+                            '/import',
+                            'import',
+                        )->name('import');
 
+                        /*
+                         * Create Question
+                         */
+                        Route::post(
+                            '/',
+                            'store',
+                        )->name('store');
+
+                        /*
+                         * Update Question
+                         */
                         Route::put(
                             '/{question}',
                             'update',
                         )->name('update');
 
+                        /*
+                         * Delete Question
+                         */
                         Route::delete(
                             '/{question}',
                             'destroy',

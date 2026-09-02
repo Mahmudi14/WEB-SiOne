@@ -1,4 +1,7 @@
 <script setup lang="ts">
+    import {
+        useConfirm,
+    } from '@/composables/useConfirm'
     import { usePolling } from '@/composables/game/usePolling'
     import AdminLayout from '@/layouts/admin/AdminLayout.vue'
 
@@ -18,6 +21,10 @@
     const props = defineProps<{
         room: PlayRoom
     }>()
+
+    const {
+        askConfirm,
+    } = useConfirm()
 
     /*
     |--------------------------------------------------------------------------
@@ -84,10 +91,20 @@
     |--------------------------------------------------------------------------
     */
 
-    const openRoom = () => {
-        const confirmed = window.confirm(
-            'Buka room ini agar peserta dapat bergabung?',
-        )
+    const openRoom = async () => {
+        const confirmed = await askConfirm({
+            title:
+                'Buka Room?',
+
+            description:
+                'Peserta akan mulai dapat bergabung ke lobby setelah room dibuka.',
+
+            confirmText:
+                'Buka Room',
+
+            tone:
+                'primary',
+        })
 
         if (!confirmed) {
             return
@@ -108,10 +125,20 @@
     |--------------------------------------------------------------------------
     */
 
-    const startGame = () => {
-        const confirmed = window.confirm(
-            `Mulai game dengan ${participantCount.value} peserta? Setelah game dimulai, peserta baru tidak dapat bergabung.`,
-        )
+    const startGame = async () => {
+        const confirmed = await askConfirm({
+            title:
+                'Mulai Pertandingan?',
+
+            description:
+                'Setelah pertandingan dimulai, peserta baru tidak dapat bergabung lagi.',
+
+            confirmText:
+                'Mulai Game',
+
+            tone:
+                'success',
+        })
 
         if (!confirmed) {
             return
@@ -156,10 +183,20 @@
     |--------------------------------------------------------------------------
     */
 
-    const closeQuestion = () => {
-        const confirmed = window.confirm(
-            'Tutup soal sekarang? Jika ada minimal satu peserta menjawab benar, peserta yang salah atau tidak menjawab akan tereliminasi. Jika tidak ada yang menjawab benar, tidak ada eliminasi.',
-        )
+    const closeQuestion = async () => {
+        const confirmed = await askConfirm({
+            title:
+                'Tutup Soal?',
+
+            description:
+                'Jawaban peserta akan dihitung dan proses eliminasi akan dilakukan. Jika tidak ada peserta yang menjawab benar, tidak ada eliminasi.',
+
+            confirmText:
+                'Tutup Soal',
+
+            tone:
+                'warning',
+        })
 
         if (!confirmed) {
             return
@@ -196,10 +233,20 @@
     |--------------------------------------------------------------------------
     */
 
-    const finishGame = () => {
-        const confirmed = window.confirm(
-            'Tutup game sekarang? Semua peserta yang masih aktif akan menjadi pemenang.',
-        )
+    const finishGame = async () => {
+        const confirmed = await askConfirm({
+            title:
+                'Akhiri Pertandingan?',
+
+            description:
+                'Semua peserta yang masih aktif akan ditetapkan sebagai pemenang dan pertandingan akan selesai.',
+
+            confirmText:
+                'Akhiri Game',
+
+            tone:
+                'danger',
+        })
 
         if (!confirmed) {
             return
@@ -628,16 +675,16 @@
                     <div class="mt-5 grid gap-3 sm:grid-cols-2">
                         <div v-for="
 option in
-                                    room.current_question.options
+    room.current_question.options
                             " :key="option.id" class="flex min-w-0 items-center gap-3 rounded-xl border px-3.5 py-3"
                             :class="option.is_correct
-                                    ? 'border-emerald-200 bg-emerald-50'
-                                    : 'border-slate-200 bg-slate-50'
+                                ? 'border-emerald-200 bg-emerald-50'
+                                : 'border-slate-200 bg-slate-50'
                                 ">
                             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-black"
                                 :class="option.is_correct
-                                        ? 'bg-emerald-600 text-white'
-                                        : 'bg-white text-slate-600'
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-white text-slate-600'
                                     ">
                                 {{ option.label }}
                             </div>
@@ -715,16 +762,16 @@ option in
                     <div class="mt-5 grid gap-3 sm:grid-cols-2">
                         <div v-for="
 option in
-                                    room.current_question.options
+    room.current_question.options
                             " :key="option.id" class="flex min-w-0 items-center gap-3 rounded-xl border px-3.5 py-3"
                             :class="option.is_correct
-                                    ? 'border-emerald-200 bg-emerald-50'
-                                    : 'border-slate-200 bg-slate-50'
+                                ? 'border-emerald-200 bg-emerald-50'
+                                : 'border-slate-200 bg-slate-50'
                                 ">
                             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-black"
                                 :class="option.is_correct
-                                        ? 'bg-emerald-600 text-white'
-                                        : 'bg-white text-slate-600'
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-white text-slate-600'
                                     ">
                                 {{ option.label }}
                             </div>
@@ -944,8 +991,8 @@ option in
                     <div v-else class="grid gap-3 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-3">
                         <div v-for="
 participant in
-                                    room.result
-                                        .correct_participants
+    room.result
+        .correct_participants
                             " :key="participant.id"
                             class="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
                             <div

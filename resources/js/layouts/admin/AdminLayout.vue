@@ -1,12 +1,23 @@
 <script setup lang="ts">
     import SiOneLogo from '@/components/SiOneLogo.vue'
+    import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+    import ToastContainer from '@/components/ui/ToastContainer.vue'
+
+    import {
+        useConfirm,
+    } from '@/composables/useConfirm'
 
     import {
         Link,
+        router,
         usePage,
     } from '@inertiajs/vue3'
 
-    import { ref } from 'vue'
+    import {
+        computed,
+        ref,
+    } from 'vue'
+
 
     withDefaults(
         defineProps<{
@@ -19,23 +30,102 @@
 
     const page = usePage()
 
-    const mobileMenuOpen = ref(false)
+    const currentPath = computed(
+        () =>
+            page.url.split('?')[0],
+    )
+
+    const mobileMenuOpen =
+        ref(false)
+
+    const closeMobileMenu = () => {
+        mobileMenuOpen.value =
+            false
+    }
 
     const isActive = (
         href: string,
     ) => {
-        const currentUrl =
-            page.url.split('?')[0]
-
-        if (href === '/admin') {
-            return currentUrl === '/admin'
+        if (
+            href === '/admin'
+        ) {
+            return (
+                currentPath.value ===
+                '/admin'
+            )
         }
 
-        return currentUrl.startsWith(href)
+        return currentPath.value.startsWith(
+            href,
+        )
     }
 
-    const closeMobileMenu = () => {
-        mobileMenuOpen.value = false
+    const dashboardActive = computed(
+        () =>
+            currentPath.value ===
+            '/admin',
+    )
+
+    const roomActive = computed(
+        () =>
+            currentPath.value.startsWith(
+                '/admin/rooms',
+            ),
+    )
+
+    const {
+        askConfirm,
+    } = useConfirm()
+
+    const logoutProcessing =
+        ref(false)
+
+    const logout = async () => {
+        if (
+            logoutProcessing.value
+        ) {
+            return
+        }
+
+        const confirmed =
+            await askConfirm({
+                title:
+                    'Keluar dari SiOne?',
+
+                description:
+                    'Sesi administrator akan diakhiri dan Anda akan kembali ke halaman login.',
+
+                confirmText:
+                    'Ya, Keluar',
+
+                cancelText:
+                    'Batal',
+
+                tone:
+                    'danger',
+            })
+
+        if (!confirmed) {
+            return
+        }
+
+        closeMobileMenu()
+
+        logoutProcessing.value =
+            true
+
+        router.post(
+            '/logout',
+            {},
+            {
+                preserveScroll: false,
+
+                onFinish: () => {
+                    logoutProcessing.value =
+                        false
+                },
+            },
+        )
     }
 </script>
 
@@ -47,18 +137,24 @@
 
         <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur">
             <div class="mx-auto flex h-18 max-w-[1600px] items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
-                <!-- Left -->
+                <!-- =============================================
+                LEFT
+                ============================================== -->
+
                 <div class="flex min-w-0 items-center gap-3">
                     <!-- Mobile Menu -->
                     <button type="button"
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/30 lg:hidden"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 lg:hidden"
                         aria-label="Buka navigasi" @click="
-                            mobileMenuOpen = true
+                            mobileMenuOpen =
+                            true
                             ">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M4 6h16" />
+
                             <path d="M4 12h16" />
+
                             <path d="M4 18h16" />
                         </svg>
                     </button>
@@ -79,14 +175,47 @@
                     </Link>
                 </div>
 
-                <!-- Right -->
-                <div class="flex items-center gap-3">
+                <!-- =============================================
+                RIGHT
+                ============================================== -->
+
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Administrator Status -->
                     <div
                         class="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 sm:flex">
-                        <span class="h-2 w-2 rounded-full bg-emerald-500" />
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40" />
+
+                            <span class="relative h-2 w-2 rounded-full bg-emerald-500" />
+                        </span>
 
                         Administrator
                     </div>
+
+                    <!-- Header Logout -->
+                    <button type="button" :disabled="logoutProcessing
+                        "
+                        class="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/20 disabled:pointer-events-none disabled:opacity-50 sm:flex"
+                        aria-label="Keluar dari SiOne" title="Keluar" @click="logout">
+                        <svg v-if="
+                            logoutProcessing
+                        " class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z" />
+                        </svg>
+
+                        <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M10 17l5-5-5-5" />
+
+                            <path d="M15 12H3" />
+
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </header>
@@ -107,22 +236,19 @@
                         Menu Utama
                     </div>
 
-                    <!-- Navigation -->
+                    <!-- =========================================
+                    NAVIGATION
+                    ========================================== -->
+
                     <nav class="mt-3 space-y-1.5">
                         <!-- Dashboard -->
                         <Link href="/admin"
                             class="group flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition"
-                            :class="isActive('/admin') &&
-                                !page.url.startsWith(
-                                    '/admin/rooms',
-                                )
+                            :class="dashboardActive
                                 ? 'bg-indigo-50 text-indigo-700'
                                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
                                 ">
-                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition" :class="isActive('/admin') &&
-                                !page.url.startsWith(
-                                    '/admin/rooms',
-                                )
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition" :class="dashboardActive
                                 ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
                                 : 'bg-slate-100 text-slate-500 group-hover:bg-white'
                                 ">
@@ -143,12 +269,7 @@
                             </span>
 
                             <span v-if="
-                                isActive(
-                                    '/admin',
-                                ) &&
-                                !page.url.startsWith(
-                                    '/admin/rooms',
-                                )
+                                dashboardActive
                             " class="h-1.5 w-1.5 rounded-full bg-indigo-600" />
                         </Link>
 
@@ -159,16 +280,12 @@
                         <div>
                             <!-- Parent -->
                             <div class="flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold"
-                                :class="isActive(
-                                    '/admin/rooms',
-                                )
+                                :class="roomActive
                                     ? 'text-indigo-700'
                                     : 'text-slate-600'
                                     ">
                                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition"
-                                    :class="isActive(
-                                        '/admin/rooms',
-                                    )
+                                    :class="roomActive
                                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
                                         : 'bg-slate-100 text-slate-500'
                                         ">
@@ -195,17 +312,13 @@
                                 <!-- Semua -->
                                 <Link href="/admin/rooms"
                                     class="relative flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm font-medium transition"
-                                    :class="page.url.split(
-                                        '?',
-                                    )[0] ===
+                                    :class="currentPath ===
                                         '/admin/rooms'
                                         ? 'bg-indigo-50 font-semibold text-indigo-700'
                                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                                         ">
                                     <span v-if="
-                                        page.url.split(
-                                            '?',
-                                        )[0] ===
+                                        currentPath ===
                                         '/admin/rooms'
                                     "
                                         class="absolute -left-[17px] h-2 w-2 rounded-full bg-indigo-600 ring-4 ring-white" />
@@ -216,17 +329,13 @@
                                 <!-- Aktif -->
                                 <Link href="/admin/rooms/active"
                                     class="relative flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm font-medium transition"
-                                    :class="page.url.split(
-                                        '?',
-                                    )[0] ===
+                                    :class="currentPath ===
                                         '/admin/rooms/active'
                                         ? 'bg-indigo-50 font-semibold text-indigo-700'
                                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                                         ">
                                     <span v-if="
-                                        page.url.split(
-                                            '?',
-                                        )[0] ===
+                                        currentPath ===
                                         '/admin/rooms/active'
                                     "
                                         class="absolute -left-[17px] h-2 w-2 rounded-full bg-emerald-500 ring-4 ring-white" />
@@ -239,17 +348,13 @@
                                 <!-- Selesai -->
                                 <Link href="/admin/rooms/finished"
                                     class="relative flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm font-medium transition"
-                                    :class="page.url.split(
-                                        '?',
-                                    )[0] ===
+                                    :class="currentPath ===
                                         '/admin/rooms/finished'
                                         ? 'bg-indigo-50 font-semibold text-indigo-700'
                                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                                         ">
                                     <span v-if="
-                                        page.url.split(
-                                            '?',
-                                        )[0] ===
+                                        currentPath ===
                                         '/admin/rooms/finished'
                                     "
                                         class="absolute -left-[17px] h-2 w-2 rounded-full bg-indigo-600 ring-4 ring-white" />
@@ -262,20 +367,79 @@
                         </div>
                     </nav>
 
-                    <!-- Bottom Info -->
-                    <div class="mt-auto">
-                        <div class="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
-                            <SiOneLogo size="h-10 w-10" />
+                    <!-- =========================================
+                    SIDEBAR BOTTOM
+                    ========================================== -->
 
-                            <div class="mt-3 text-sm font-bold text-slate-900">
-                                SiOne Admin
+                    <div class="mt-auto space-y-3">
+                        <!-- Info Card -->
+                        <div class="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
+                            <div class="flex items-center gap-3">
+                                <SiOneLogo size="h-10 w-10" />
+
+                                <div class="min-w-0">
+                                    <div class="truncate text-sm font-bold text-slate-900">
+                                        SiOne Admin
+                                    </div>
+
+                                    <div
+                                        class="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+
+                                        Administrator aktif
+                                    </div>
+                                </div>
                             </div>
 
-                            <p class="mt-1 text-xs leading-5 text-slate-500">
-                                Kelola room dan jalankan pertandingan dari
-                                satu tempat.
+                            <p class="mt-3 text-xs leading-5 text-slate-500">
+                                Kelola room dan jalankan
+                                pertandingan dari satu tempat.
                             </p>
                         </div>
+
+                        <!-- Logout -->
+                        <button type="button" :disabled="logoutProcessing
+                            "
+                            class="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-transparent px-3.5 py-2.5 text-left text-sm font-semibold text-slate-500 transition hover:border-red-100 hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-50"
+                            @click="logout">
+                            <div
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition group-hover:bg-red-100 group-hover:text-red-600">
+                                <svg v-if="
+                                    logoutProcessing
+                                " class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4" />
+
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z" />
+                                </svg>
+
+                                <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M10 17l5-5-5-5" />
+
+                                    <path d="M15 12H3" />
+
+                                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                                </svg>
+                            </div>
+
+                            <span class="flex-1">
+                                {{
+                                    logoutProcessing
+                                        ? 'Keluar...'
+                                        : 'Keluar'
+                                }}
+                            </span>
+
+                            <svg v-if="
+                                !logoutProcessing
+                            " class="h-4 w-4 text-slate-300 transition group-hover:text-red-400" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="m9 18 6-6-6-6" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </aside>
@@ -310,35 +474,48 @@
         </div>
 
         <!-- =====================================================
-        MOBILE/TABLET SIDEBAR
+        MOBILE / TABLET SIDEBAR
         ====================================================== -->
 
         <Teleport to="body">
-            <!-- Overlay -->
+            <!-- ================================================
+            OVERLAY
+            ================================================= -->
+
             <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0"
                 enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200"
                 leave-from-class="opacity-100" leave-to-class="opacity-0">
-                <div v-if="mobileMenuOpen" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-[2px] lg:hidden"
-                    @click="closeMobileMenu" />
+                <div v-if="
+                    mobileMenuOpen
+                " class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-[2px] lg:hidden" @click="
+                    closeMobileMenu
+                " />
             </Transition>
 
-            <!-- Drawer -->
+            <!-- ================================================
+            DRAWER
+            ================================================= -->
+
             <Transition enter-active-class="transition-transform duration-300 ease-out"
                 enter-from-class="-translate-x-full" enter-to-class="translate-x-0"
                 leave-active-class="transition-transform duration-200 ease-in" leave-from-class="translate-x-0"
                 leave-to-class="-translate-x-full">
-                <aside v-if="mobileMenuOpen"
+                <aside v-if="
+                    mobileMenuOpen
+                "
                     class="fixed inset-y-0 left-0 z-[60] flex w-[min(85vw,320px)] flex-col bg-white shadow-2xl lg:hidden">
                     <!-- =========================================
                     DRAWER HEADER
                     ========================================== -->
 
                     <div class="flex h-18 shrink-0 items-center justify-between border-b border-slate-200 px-4 sm:h-20">
-                        <div class="flex items-center gap-3">
+                        <Link href="/admin" class="flex min-w-0 items-center gap-3" @click="
+                            closeMobileMenu
+                        ">
                             <SiOneLogo size="h-10 w-10" />
 
-                            <div>
-                                <div class="font-extrabold text-slate-950">
+                            <div class="min-w-0">
+                                <div class="truncate font-extrabold text-slate-950">
                                     SiOne
                                 </div>
 
@@ -346,7 +523,7 @@
                                     Admin Control Center
                                 </div>
                             </div>
-                        </div>
+                        </Link>
 
                         <button type="button"
                             class="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
@@ -354,8 +531,9 @@
                                 closeMobileMenu
                             ">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M18 6 6 18" />
+
                                 <path d="m6 6 12 12" />
                             </svg>
                         </button>
@@ -374,29 +552,18 @@
                             <!-- Dashboard -->
                             <Link href="/admin"
                                 class="flex min-h-12 items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold transition"
-                                :class="isActive(
-                                    '/admin',
-                                ) &&
-                                    !page.url.startsWith(
-                                        '/admin/rooms',
-                                    )
+                                :class="dashboardActive
                                     ? 'bg-indigo-50 text-indigo-700'
                                     : 'text-slate-600 hover:bg-slate-50'
                                     " @click="
                                         closeMobileMenu
                                     ">
-                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" :class="isActive(
-                                    '/admin',
-                                ) &&
-                                    !page.url.startsWith(
-                                        '/admin/rooms',
-                                    )
+                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" :class="dashboardActive
                                     ? 'bg-indigo-600 text-white'
                                     : 'bg-slate-100 text-slate-500'
                                     ">
                                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                        aria-hidden="true">
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <rect width="7" height="9" x="3" y="3" rx="1" />
 
                                         <rect width="7" height="5" x="14" y="3" rx="1" />
@@ -413,27 +580,22 @@
                             </Link>
 
                             <!-- =================================
-                            ROOM MOBILE
+                            ROOM
                             ================================== -->
 
                             <div>
                                 <!-- Parent -->
                                 <div class="flex min-h-12 items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold"
-                                    :class="isActive(
-                                        '/admin/rooms',
-                                    )
+                                    :class="roomActive
                                         ? 'text-indigo-700'
                                         : 'text-slate-600'
                                         ">
-                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" :class="isActive(
-                                        '/admin/rooms',
-                                    )
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" :class="roomActive
                                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
                                         : 'bg-slate-100 text-slate-500'
                                         ">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                            aria-hidden="true">
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <rect width="18" height="18" x="3" y="3" rx="2" />
 
                                             <path d="M7 8h10" />
@@ -454,9 +616,7 @@
                                     <!-- Semua -->
                                     <Link href="/admin/rooms"
                                         class="relative flex min-h-12 items-center rounded-xl px-3.5 py-3 text-sm font-medium transition"
-                                        :class="page.url.split(
-                                            '?',
-                                        )[0] ===
+                                        :class="currentPath ===
                                             '/admin/rooms'
                                             ? 'bg-indigo-50 font-semibold text-indigo-700'
                                             : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
@@ -464,9 +624,7 @@
                                                 closeMobileMenu
                                             ">
                                         <span v-if="
-                                            page.url.split(
-                                                '?',
-                                            )[0] ===
+                                            currentPath ===
                                             '/admin/rooms'
                                         "
                                             class="absolute -left-[17px] h-2 w-2 rounded-full bg-indigo-600 ring-4 ring-white" />
@@ -474,8 +632,7 @@
                                         <span
                                             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
                                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                aria-hidden="true">
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <rect width="16" height="16" x="4" y="4" rx="2" />
 
                                                 <path d="M8 9h8" />
@@ -494,9 +651,7 @@
                                     <!-- Aktif -->
                                     <Link href="/admin/rooms/active"
                                         class="relative flex min-h-12 items-center rounded-xl px-3.5 py-3 text-sm font-medium transition"
-                                        :class="page.url.split(
-                                            '?',
-                                        )[0] ===
+                                        :class="currentPath ===
                                             '/admin/rooms/active'
                                             ? 'bg-indigo-50 font-semibold text-indigo-700'
                                             : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
@@ -504,9 +659,7 @@
                                                 closeMobileMenu
                                             ">
                                         <span v-if="
-                                            page.url.split(
-                                                '?',
-                                            )[0] ===
+                                            currentPath ===
                                             '/admin/rooms/active'
                                         "
                                             class="absolute -left-[17px] h-2 w-2 rounded-full bg-emerald-500 ring-4 ring-white" />
@@ -524,9 +677,7 @@
                                     <!-- Selesai -->
                                     <Link href="/admin/rooms/finished"
                                         class="relative flex min-h-12 items-center rounded-xl px-3.5 py-3 text-sm font-medium transition"
-                                        :class="page.url.split(
-                                            '?',
-                                        )[0] ===
+                                        :class="currentPath ===
                                             '/admin/rooms/finished'
                                             ? 'bg-indigo-50 font-semibold text-indigo-700'
                                             : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
@@ -534,9 +685,7 @@
                                                 closeMobileMenu
                                             ">
                                         <span v-if="
-                                            page.url.split(
-                                                '?',
-                                            )[0] ===
+                                            currentPath ===
                                             '/admin/rooms/finished'
                                         "
                                             class="absolute -left-[17px] h-2 w-2 rounded-full bg-indigo-600 ring-4 ring-white" />
@@ -545,7 +694,7 @@
                                             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50">
                                             <svg class="h-4 w-4 text-indigo-600" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                                stroke-linejoin="round" aria-hidden="true">
+                                                stroke-linejoin="round">
                                                 <path d="m5 12 4 4L19 6" />
                                             </svg>
                                         </span>
@@ -563,7 +712,8 @@
                     DRAWER FOOTER
                     ========================================== -->
 
-                    <div class="shrink-0 border-t border-slate-200 p-4">
+                    <div class="shrink-0 space-y-2 border-t border-slate-200 p-4">
+                        <!-- Admin Status -->
                         <div class="flex min-h-12 items-center gap-3 rounded-xl bg-slate-50 px-3.5 py-3">
                             <span class="relative flex h-2.5 w-2.5">
                                 <span
@@ -572,13 +722,69 @@
                                 <span class="relative h-2.5 w-2.5 rounded-full bg-emerald-500" />
                             </span>
 
-                            <span class="text-xs font-semibold text-slate-600">
-                                Administrator aktif
-                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="text-xs font-semibold text-slate-700">
+                                    Administrator
+                                </div>
+
+                                <div class="mt-0.5 text-[11px] text-slate-400">
+                                    Sesi aktif
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Mobile Logout -->
+                        <button type="button" :disabled="logoutProcessing
+                            "
+                            class="group flex min-h-12 w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50/70 px-3.5 py-3 text-left text-sm font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-50"
+                            @click="logout">
+                            <span
+                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-red-500 shadow-sm">
+                                <svg v-if="
+                                    logoutProcessing
+                                " class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4" />
+
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z" />
+                                </svg>
+
+                                <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10 17l5-5-5-5" />
+
+                                    <path d="M15 12H3" />
+
+                                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                                </svg>
+                            </span>
+
+                            <span class="flex-1">
+                                {{
+                                    logoutProcessing
+                                        ? 'Keluar...'
+                                        : 'Keluar dari SiOne'
+                                }}
+                            </span>
+
+                            <svg v-if="
+                                !logoutProcessing
+                            " class="h-4 w-4 text-red-300" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m9 18 6-6-6-6" />
+                            </svg>
+                        </button>
                     </div>
                 </aside>
             </Transition>
         </Teleport>
+
+        <!-- =====================================================
+        GLOBAL UI
+        ====================================================== -->
+
+        <ConfirmDialog />
+        <ToastContainer />
     </div>
 </template>

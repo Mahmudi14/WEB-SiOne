@@ -201,25 +201,123 @@ class RoomController extends Controller
     */
 
     public function edit(
+        Request $request,
         Room $room,
     ): Response {
-        $room->load([
-            'questions' =>
-            fn($query) =>
-            $query->orderBy(
-                'position',
-            ),
-
-            'questions.options' =>
-            fn($query) =>
-            $query->orderBy(
-                'label',
-            ),
-        ]);
+        /*
+    |--------------------------------------------------------------------------
+    | Permission
+    |--------------------------------------------------------------------------
+    */
 
         $canEdit =
             $room->status ===
             RoomStatus::Locked;
+
+        /*
+    |--------------------------------------------------------------------------
+    | Question Search
+    |--------------------------------------------------------------------------
+    */
+
+        $search = trim(
+            (string) $request->query(
+                'q',
+                '',
+            ),
+        );
+
+        /*
+    |--------------------------------------------------------------------------
+    | Total Questions
+    |--------------------------------------------------------------------------
+    |
+    | Ini total seluruh soal dalam room,
+    | tidak terpengaruh pencarian.
+    |
+    */
+
+        $questionCount =
+            $room->questions()
+            ->count();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Paginated Questions
+    |--------------------------------------------------------------------------
+    */
+
+        $questions = $room
+            ->questions()
+            ->with([
+                'options' =>
+                fn($query) =>
+                $query->orderBy(
+                    'label',
+                ),
+            ])
+            ->when(
+                $search !== '',
+                fn($query) =>
+                $query->where(
+                    'text',
+                    'like',
+                    '%' . $search . '%',
+                ),
+            )
+            ->orderBy(
+                'position',
+            )
+            ->paginate(
+                perPage: 10,
+                pageName: 'question_page',
+            )
+            ->withQueryString();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Transform Questions
+    |--------------------------------------------------------------------------
+    */
+
+        $questions->through(
+            fn($question) => [
+                'id' =>
+                $question->id,
+
+                'text' =>
+                $question->text,
+
+                'position' =>
+                $question->position,
+
+                'options' =>
+                $question->options
+                    ->map(
+                        fn($option) => [
+                            'id' =>
+                            $option->id,
+
+                            'label' =>
+                            $option->label,
+
+                            'text' =>
+                            $option->text,
+
+                            'is_correct' =>
+                            $option->is_correct,
+                        ],
+                    )
+                    ->values()
+                    ->all(),
+            ],
+        );
+
+        /*
+    |--------------------------------------------------------------------------
+    | Response
+    |--------------------------------------------------------------------------
+    */
 
         return Inertia::render(
             'admin/rooms/Edit',
@@ -246,52 +344,32 @@ class RoomController extends Controller
                     'shuffle_questions' =>
                     $room->shuffle_questions,
 
-                    /*
-                     * Dipakai frontend untuk
-                     * disable form.
-                     */
                     'can_edit' =>
                     $canEdit,
 
                     'can_edit_questions' =>
                     $canEdit,
 
+                    /*
+                 * Total seluruh soal,
+                 * tidak berubah saat search.
+                 */
+                    'question_count' =>
+                    $questionCount,
+
+                    /*
+                 * Data pagination.
+                 */
                     'questions' =>
-                    $room->questions
-                        ->map(
-                            fn($question) => [
-                                'id' =>
-                                $question->id,
+                    $questions,
 
-                                'text' =>
-                                $question->text,
-
-                                'position' =>
-                                $question->position,
-
-                                'options' =>
-                                $question->options
-                                    ->map(
-                                        fn($option) => [
-                                            'id' =>
-                                            $option->id,
-
-                                            'label' =>
-                                            $option->label,
-
-                                            'text' =>
-                                            $option->text,
-
-                                            'is_correct' =>
-                                            $option->is_correct,
-                                        ],
-                                    )
-                                    ->values()
-                                    ->all(),
-                            ],
-                        )
-                        ->values()
-                        ->all(),
+                    /*
+                 * Filter aktif.
+                 */
+                    'question_filters' => [
+                        'search' =>
+                        $search,
+                    ],
                 ],
             ],
         );
@@ -345,14 +423,15 @@ class RoomController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /*
+|--------------------------------------------------------------------------
+| Destroy
+|--------------------------------------------------------------------------
+*/
+
     public function destroy(
         Room $room,
     ): RedirectResponse {
-        /*
-         * Room WAITING/RUNNING tidak boleh dihapus.
-         *
-         * LOCKED dan FINISHED masih boleh dihapus.
-         */
         abort_if(
             in_array(
                 $room->status,
@@ -368,9 +447,7 @@ class RoomController extends Controller
 
         $room->delete();
 
-        return to_route(
-            'admin.rooms.index',
-        )->with(
+        return back()->with(
             'success',
             'Room berhasil dihapus.',
         );
