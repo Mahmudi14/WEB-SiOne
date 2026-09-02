@@ -1,0 +1,1 @@
+import{Wt as e,X as t,at as n,sr as r}from"./dist-DYbTWcPd.js";var i=[`alt`],a=n({__name:`SiOneLogo`,props:{size:{default:`h-10 w-10`},alt:{default:`SiOne`}},setup(n){return(a,o)=>(e(),t(`img`,{src:`/images/sione-logo.png`,alt:n.alt,class:r([n.size,`block shrink-0 rounded-xl object-contain`])},null,10,i))}});export{a as t};
