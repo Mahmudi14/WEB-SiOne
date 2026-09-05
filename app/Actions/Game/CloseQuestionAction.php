@@ -16,12 +16,6 @@ class CloseQuestionAction
     public function execute(Room $room): Room
     {
         return DB::transaction(function () use ($room) {
-            /*
-            |--------------------------------------------------------------------------
-            | Lock Room
-            |--------------------------------------------------------------------------
-            */
-
             $room = Room::query()
                 ->whereKey($room->id)
                 ->lockForUpdate()
@@ -45,28 +39,21 @@ class CloseQuestionAction
                 'Tidak ada soal aktif.',
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Current Question
-            |--------------------------------------------------------------------------
-            */
-
             $question = Question::query()
-                ->whereKey($room->current_question_id)
-                ->where('room_id', $room->id)
+                ->whereKey(
+                    $room->current_question_id,
+                )
+                ->where(
+                    'room_id',
+                    $room->id,
+                )
                 ->firstOrFail();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Active Participants
-            |--------------------------------------------------------------------------
-            |
-            | Ini adalah peserta yang masih bertahan SEBELUM soal ditutup.
-            |
-            */
-
             $activeParticipants = Participant::query()
-                ->where('room_id', $room->id)
+                ->where(
+                    'room_id',
+                    $room->id,
+                )
                 ->where(
                     'status',
                     ParticipantStatus::Active->value,
@@ -75,16 +62,14 @@ class CloseQuestionAction
                 ->get();
 
             $activeParticipantIds =
-                $activeParticipants->pluck('id');
-
-            /*
-            |--------------------------------------------------------------------------
-            | Correct Participants
-            |--------------------------------------------------------------------------
-            */
+                $activeParticipants
+                ->pluck('id');
 
             $correctParticipantIds = Answer::query()
-                ->where('room_id', $room->id)
+                ->where(
+                    'room_id',
+                    $room->id,
+                )
                 ->where(
                     'question_id',
                     $question->id,
@@ -93,31 +78,21 @@ class CloseQuestionAction
                     'participant_id',
                     $activeParticipantIds,
                 )
-                ->where('is_correct', true)
-                ->pluck('participant_id');
+                ->where(
+                    'is_correct',
+                    true,
+                )
+                ->pluck(
+                    'participant_id',
+                );
 
             $correctCount =
                 $correctParticipantIds->count();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Elimination Rule
-            |--------------------------------------------------------------------------
-            |
-            | RULE RANKING SATU:
-            |
-            | correct_count > 0
-            |     → hanya yang benar bertahan
-            |
-            | correct_count = 0
-            |     → TIDAK ADA ELIMINASI
-            |     → semua peserta aktif tetap bertahan
-            |
-            */
-
             if ($correctCount > 0) {
                 $eliminatedParticipantIds =
-                    $activeParticipantIds->diff(
+                    $activeParticipantIds
+                    ->diff(
                         $correctParticipantIds,
                     );
 
@@ -143,21 +118,52 @@ class CloseQuestionAction
                 }
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Close Question
-            |--------------------------------------------------------------------------
-            */
-
             $question->update([
                 'closed_at' => now(),
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Result Phase
-            |--------------------------------------------------------------------------
-            */
+            $remainingParticipants = Participant::query()
+                ->where(
+                    'room_id',
+                    $room->id,
+                )
+                ->where(
+                    'status',
+                    ParticipantStatus::Active->value,
+                )
+                ->lockForUpdate()
+                ->get();
+
+            if (
+                $remainingParticipants->count() === 1
+            ) {
+                Participant::query()
+                    ->whereKey(
+                        $remainingParticipants
+                            ->first()
+                            ->id,
+                    )
+                    ->update([
+                        'status' =>
+                        ParticipantStatus::Winner->value,
+                    ]);
+
+                $room->update([
+                    'status' =>
+                    RoomStatus::Finished,
+
+                    'game_phase' =>
+                    null,
+
+                    'finished_at' =>
+                    now(),
+
+                    'revision' =>
+                    $room->revision + 1,
+                ]);
+
+                return $room->refresh();
+            }
 
             $room->update([
                 'game_phase' =>

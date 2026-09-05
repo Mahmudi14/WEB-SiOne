@@ -101,6 +101,14 @@
       "_wayfinder-Dp7PqxvV.js"
     ]
   },
+  "_rooms-COFqjwEB.js": {
+    "file": "assets/rooms-COFqjwEB.js",
+    "name": "rooms",
+    "imports": [
+      "_wayfinder-Dp7PqxvV.js",
+      "_questions-0FgZRa8-.js"
+    ]
+  },
   "_usePolling-Chl-ZU6L.js": {
     "file": "assets/usePolling-Chl-ZU6L.js",
     "name": "usePolling",
@@ -122,7 +130,7 @@
     "isEntry": true
   },
   "resources/js/app.ts": {
-    "file": "assets/app-BhKLEo08.js",
+    "file": "assets/app-DbknF7er.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -151,7 +159,7 @@
     ]
   },
   "resources/js/pages/Welcome.vue": {
-    "file": "assets/Welcome-DkEu8o3q.js",
+    "file": "assets/Welcome-CV0PqAPF.js",
     "name": "Welcome",
     "src": "resources/js/pages/Welcome.vue",
     "isDynamicEntry": true,
@@ -160,7 +168,7 @@
       "_wayfinder-Dp7PqxvV.js",
       "resources/js/app.ts",
       "_SiOneLogo-rQgk2Tns.js",
-      "_questions-0FgZRa8-.js"
+      "_rooms-COFqjwEB.js"
     ]
   },
   "resources/js/pages/admin/dashboard/Index.vue": {
@@ -205,12 +213,13 @@
     ]
   },
   "resources/js/pages/admin/rooms/Play.vue": {
-    "file": "assets/Play-9d2c2DVJ.js",
+    "file": "assets/Play-D5SD_mp_.js",
     "name": "Play",
     "src": "resources/js/pages/admin/rooms/Play.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
+      "_rooms-COFqjwEB.js",
       "_AdminLayout-DbOqsN7v.js",
       "_usePolling-Chl-ZU6L.js"
     ]
@@ -226,7 +235,7 @@
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-DWiirDr1.js",
+    "file": "assets/ForgotPassword-g75wVAUO.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
@@ -301,7 +310,7 @@
     ]
   },
   "resources/js/pages/settings/Appearance.vue": {
-    "file": "assets/Appearance-B8qvRhiH.js",
+    "file": "assets/Appearance-Dx13Rzir.js",
     "name": "Appearance",
     "src": "resources/js/pages/settings/Appearance.vue",
     "isDynamicEntry": true,

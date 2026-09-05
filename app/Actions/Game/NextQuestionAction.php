@@ -31,17 +31,6 @@ class NextQuestionAction
                 'Soal harus ditutup terlebih dahulu.',
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Defensive Check
-            |--------------------------------------------------------------------------
-            |
-            | Dengan rule "zero correct = no elimination",
-            | seharusnya peserta aktif tidak pernah menjadi 0
-            | akibat satu soal.
-            |
-            */
-
             $activeParticipantCount = $room
                 ->participants()
                 ->where(
@@ -51,9 +40,9 @@ class NextQuestionAction
                 ->count();
 
             abort_if(
-                $activeParticipantCount === 0,
+                $activeParticipantCount <= 1,
                 422,
-                'Tidak ada peserta aktif yang dapat melanjutkan.',
+                'Soal berikutnya tidak dapat dilanjutkan karena pemenang sudah ditentukan.',
             );
 
             abort_unless(
@@ -61,12 +50,6 @@ class NextQuestionAction
                 422,
                 'Tidak ada soal aktif.',
             );
-
-            /*
-            |--------------------------------------------------------------------------
-            | Current Question
-            |--------------------------------------------------------------------------
-            */
 
             $currentQuestion = Question::query()
                 ->whereKey(
@@ -78,24 +61,22 @@ class NextQuestionAction
                 )
                 ->firstOrFail();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Find Next Question
-            |--------------------------------------------------------------------------
-            */
-
             $nextQuestion = Question::query()
                 ->where(
                     'room_id',
                     $room->id,
                 )
-                ->whereNotNull('game_order')
+                ->whereNotNull(
+                    'game_order',
+                )
                 ->where(
                     'game_order',
                     '>',
                     $currentQuestion->game_order,
                 )
-                ->orderBy('game_order')
+                ->orderBy(
+                    'game_order',
+                )
                 ->first();
 
             abort_unless(
@@ -103,12 +84,6 @@ class NextQuestionAction
                 422,
                 'Tidak ada soal berikutnya. Silakan tutup game.',
             );
-
-            /*
-            |--------------------------------------------------------------------------
-            | Prepare Next Question
-            |--------------------------------------------------------------------------
-            */
 
             $room->update([
                 'current_question_id' =>

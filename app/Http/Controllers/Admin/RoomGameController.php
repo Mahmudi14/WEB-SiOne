@@ -20,12 +20,6 @@ use Inertia\Response;
 
 class RoomGameController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Play Page
-    |--------------------------------------------------------------------------
-    */
-
     public function show(Room $room): Response
     {
         $room->load([
@@ -40,12 +34,6 @@ class RoomGameController extends Controller
             ],
         );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Polling State
-    |--------------------------------------------------------------------------
-    */
 
     public function state(Room $room): JsonResponse
     {
@@ -79,12 +67,6 @@ class RoomGameController extends Controller
 
         $answeredCount = 0;
         $waitingAnswerCount = 0;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Answer Progress
-        |--------------------------------------------------------------------------
-        */
 
         if (
             $room->status === RoomStatus::Running &&
@@ -136,12 +118,6 @@ class RoomGameController extends Controller
         ]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Open Room
-    |--------------------------------------------------------------------------
-    */
-
     public function open(
         Room $room,
         OpenRoomAction $action,
@@ -156,12 +132,6 @@ class RoomGameController extends Controller
             'Room berhasil dibuka.',
         );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Start Game
-    |--------------------------------------------------------------------------
-    */
 
     public function start(
         Room $room,
@@ -178,12 +148,6 @@ class RoomGameController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Open Question
-    |--------------------------------------------------------------------------
-    */
-
     public function openQuestion(
         Room $room,
         OpenQuestionAction $action,
@@ -199,32 +163,27 @@ class RoomGameController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Close Question
-    |--------------------------------------------------------------------------
-    */
-
     public function closeQuestion(
         Room $room,
         CloseQuestionAction $action,
     ): RedirectResponse {
-        $action->execute($room);
+        $updatedRoom =
+            $action->execute($room);
+
+        $message =
+            $updatedRoom->status ===
+            RoomStatus::Finished
+            ? 'Soal ditutup dan pemenang berhasil ditentukan.'
+            : 'Soal berhasil ditutup.';
 
         return to_route(
             'admin.rooms.play',
-            $room,
+            $updatedRoom,
         )->with(
             'success',
-            'Soal berhasil ditutup.',
+            $message,
         );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Next Question
-    |--------------------------------------------------------------------------
-    */
 
     public function nextQuestion(
         Room $room,
@@ -241,12 +200,6 @@ class RoomGameController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Finish Game
-    |--------------------------------------------------------------------------
-    */
-
     public function finish(
         Room $room,
         FinishGameAction $action,
@@ -261,12 +214,6 @@ class RoomGameController extends Controller
             'Game berhasil diselesaikan.',
         );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Room Data
-    |--------------------------------------------------------------------------
-    */
 
     private function roomData(
         Room $room,
@@ -311,12 +258,6 @@ class RoomGameController extends Controller
         $hasNextQuestion = false;
         $result = null;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Current Question Runtime
-        |--------------------------------------------------------------------------
-        */
-
         if ($currentQuestion) {
             $answeredCount = $room
                 ->answers()
@@ -325,12 +266,6 @@ class RoomGameController extends Controller
                     $currentQuestion->id,
                 )
                 ->count();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Open Phase
-            |--------------------------------------------------------------------------
-            */
 
             if (
                 $room->status === RoomStatus::Running &&
@@ -343,30 +278,27 @@ class RoomGameController extends Controller
                 );
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Has Next Question
-            |--------------------------------------------------------------------------
-            */
-
-            $hasNextQuestion = $room
-                ->questions()
-                ->whereNotNull('game_order')
-                ->where(
-                    'game_order',
-                    '>',
-                    $currentQuestion->game_order,
-                )
-                ->exists();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Result
-            |--------------------------------------------------------------------------
-            */
+            if (
+                $room->status === RoomStatus::Running &&
+                $room->game_phase === GamePhase::Result &&
+                $activeParticipantCount > 1
+            ) {
+                $hasNextQuestion = $room
+                    ->questions()
+                    ->whereNotNull(
+                        'game_order',
+                    )
+                    ->where(
+                        'game_order',
+                        '>',
+                        $currentQuestion->game_order,
+                    )
+                    ->exists();
+            }
 
             if (
-                $room->game_phase === GamePhase::Result
+                $room->game_phase ===
+                GamePhase::Result
             ) {
                 $correctAnswers = $room
                     ->answers()
@@ -398,26 +330,10 @@ class RoomGameController extends Controller
                     )
                     ->count();
 
-                /*
-                |--------------------------------------------------------------------------
-                | Round Type
-                |--------------------------------------------------------------------------
-                |
-                | Jika tidak ada yang benar:
-                | no_elimination
-                |
-                */
-
                 $roundResult =
                     $correctCount === 0
                     ? 'no_elimination'
                     : 'normal';
-
-                /*
-                |--------------------------------------------------------------------------
-                | Eliminated On This Question
-                |--------------------------------------------------------------------------
-                */
 
                 $eliminatedThisQuestionCount =
                     $room
@@ -428,12 +344,6 @@ class RoomGameController extends Controller
                     )
                     ->count();
 
-                /*
-                |--------------------------------------------------------------------------
-                | Remaining
-                |--------------------------------------------------------------------------
-                */
-
                 $remainingCount = $room
                     ->participants()
                     ->where(
@@ -441,19 +351,6 @@ class RoomGameController extends Controller
                         ParticipantStatus::Active->value,
                     )
                     ->count();
-
-                /*
-                |--------------------------------------------------------------------------
-                | Participants Before Round
-                |--------------------------------------------------------------------------
-                |
-                | Normal:
-                | remaining + eliminated_current_question
-                |
-                | No elimination:
-                | remaining = seluruh peserta sebelum ronde
-                |
-                */
 
                 $participantsBeforeRound =
                     $remainingCount +
@@ -513,12 +410,6 @@ class RoomGameController extends Controller
             }
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Response
-        |--------------------------------------------------------------------------
-        */
-
         return [
             'id' =>
             $room->id,
@@ -545,7 +436,9 @@ class RoomGameController extends Controller
             $room->revision,
 
             'question_count' =>
-            $room->questions()->count(),
+            $room
+                ->questions()
+                ->count(),
 
             'participant_count' =>
             $participantCount,
