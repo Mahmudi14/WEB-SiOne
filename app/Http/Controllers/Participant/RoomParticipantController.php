@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Participant\SubmitAnswerRequest;
 use App\Models\Answer;
 use App\Models\Participant;
+use App\Models\Question;
 use App\Models\QuestionOption;
 use App\Models\Room;
 use Illuminate\Http\JsonResponse;
@@ -20,24 +21,12 @@ use Inertia\Response;
 
 class RoomParticipantController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Find Room Page
-    |--------------------------------------------------------------------------
-    */
-
     public function index(): Response
     {
         return Inertia::render(
             'participant/FindRoom',
         );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Find Room
-    |--------------------------------------------------------------------------
-    */
 
     public function find(
         Request $request,
@@ -66,7 +55,8 @@ class RoomParticipantController extends Controller
         }
 
         if (
-            $room->status === RoomStatus::Locked
+            $room->status ===
+            RoomStatus::Locked
         ) {
             return back()->withErrors([
                 'code' =>
@@ -75,7 +65,8 @@ class RoomParticipantController extends Controller
         }
 
         if (
-            $room->status === RoomStatus::Running
+            $room->status ===
+            RoomStatus::Running
         ) {
             return back()->withErrors([
                 'code' =>
@@ -84,7 +75,8 @@ class RoomParticipantController extends Controller
         }
 
         if (
-            $room->status === RoomStatus::Finished
+            $room->status ===
+            RoomStatus::Finished
         ) {
             return back()->withErrors([
                 'code' =>
@@ -98,20 +90,16 @@ class RoomParticipantController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Join Form
-    |--------------------------------------------------------------------------
-    */
-
     public function joinForm(
         Request $request,
         string $code,
     ): Response|RedirectResponse {
-        $room = $this->roomByCode($code);
+        $room =
+            $this->roomByCode($code);
 
         abort_unless(
-            $room->status === RoomStatus::Waiting,
+            $room->status ===
+                RoomStatus::Waiting,
             404,
         );
 
@@ -145,31 +133,27 @@ class RoomParticipantController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Join
-    |--------------------------------------------------------------------------
-    */
-
     public function join(
         Request $request,
         string $code,
     ): RedirectResponse {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:150',
-            ],
+        $validated =
+            $request->validate([
+                'name' => [
+                    'required',
+                    'string',
+                    'max:150',
+                ],
 
-            'participant_code' => [
-                'required',
-                'string',
-                'max:50',
-            ],
-        ]);
+                'participant_code' => [
+                    'required',
+                    'string',
+                    'max:50',
+                ],
+            ]);
 
-        $room = $this->roomByCode($code);
+        $room =
+            $this->roomByCode($code);
 
         $participant = DB::transaction(
             function () use (
@@ -252,17 +236,12 @@ class RoomParticipantController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Lobby
-    |--------------------------------------------------------------------------
-    */
-
     public function lobby(
         Request $request,
         string $code,
     ): Response|RedirectResponse {
-        $room = $this->roomByCode($code);
+        $room =
+            $this->roomByCode($code);
 
         $participant =
             $this->participantFromSession(
@@ -277,7 +256,8 @@ class RoomParticipantController extends Controller
         );
 
         if (
-            $room->status === RoomStatus::Running
+            $room->status ===
+            RoomStatus::Running
         ) {
             return to_route(
                 'participant.play',
@@ -296,7 +276,9 @@ class RoomParticipantController extends Controller
                     $room->code,
 
                     'status' =>
-                    $room->status->value,
+                    $room
+                        ->status
+                        ->value,
 
                     'revision' =>
                     $room->revision,
@@ -318,17 +300,12 @@ class RoomParticipantController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Game Page
-    |--------------------------------------------------------------------------
-    */
-
     public function play(
         Request $request,
         string $code,
     ): Response|RedirectResponse {
-        $room = $this->roomByCode($code);
+        $room =
+            $this->roomByCode($code);
 
         $participant =
             $this->participantFromSession(
@@ -343,13 +320,20 @@ class RoomParticipantController extends Controller
         );
 
         if (
-            $room->status === RoomStatus::Waiting
+            $room->status ===
+            RoomStatus::Waiting
         ) {
             return to_route(
                 'participant.lobby',
                 $room->code,
             );
         }
+
+        $participantView =
+            $this->resolveParticipantView(
+                $room,
+                $participant,
+            );
 
         return Inertia::render(
             'participant/Game',
@@ -362,12 +346,17 @@ class RoomParticipantController extends Controller
                     $room->code,
 
                     'status' =>
-                    $room->status->value,
+                    $room
+                        ->status
+                        ->value,
 
                     'game_phase' =>
                     $room
                         ->game_phase
                         ?->value,
+
+                    'participant_view' =>
+                    $participantView,
 
                     'revision' =>
                     $room->revision,
@@ -389,17 +378,12 @@ class RoomParticipantController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Polling State
-    |--------------------------------------------------------------------------
-    */
-
     public function state(
         Request $request,
         string $code,
     ): JsonResponse {
-        $room = $this->roomByCode($code);
+        $room =
+            $this->roomByCode($code);
 
         $participant =
             $this->participantFromSession(
@@ -413,30 +397,21 @@ class RoomParticipantController extends Controller
             'Peserta belum bergabung ke room ini.',
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Determine Answer Question
-        |--------------------------------------------------------------------------
-        |
-        | Jika peserta sudah tereliminasi,
-        | tetap gunakan soal tempat dia tereliminasi.
-        |
-        | Dengan ini layar SALAH / TIDAK MENJAWAB
-        | tetap benar walaupun admin sudah NEXT.
-        |
-        */
+        $participantView =
+            $this->resolveParticipantView(
+                $room,
+                $participant,
+            );
 
-        $answerQuestionId =
-            $participant->status ===
-            ParticipantStatus::Eliminated &&
-            $participant->eliminated_question_id
-            ? $participant
-            ->eliminated_question_id
-            : $room->current_question_id;
+        $displayQuestion =
+            $this->resolveDisplayQuestion(
+                $room,
+                $participant,
+            );
 
         $currentAnswer = null;
 
-        if ($answerQuestionId) {
+        if ($displayQuestion) {
             $currentAnswer = Answer::query()
                 ->where(
                     'participant_id',
@@ -444,25 +419,13 @@ class RoomParticipantController extends Controller
                 )
                 ->where(
                     'question_id',
-                    $answerQuestionId,
+                    $displayQuestion->id,
                 )
                 ->first();
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Base Answer Result
-        |--------------------------------------------------------------------------
-        */
-
         $answerResult = null;
         $roundResult = null;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Eliminated Participant
-        |--------------------------------------------------------------------------
-        */
 
         if (
             $participant->status ===
@@ -473,28 +436,22 @@ class RoomParticipantController extends Controller
                 ? 'wrong'
                 : 'no_answer';
 
-            $roundResult = 'normal';
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Current Result Phase
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            $room->game_phase ===
-            GamePhase::Result &&
-            $room->current_question_id
+            $roundResult =
+                'normal';
+        } elseif (
+            $participantView ===
+            'result' &&
+            $displayQuestion
         ) {
-            $correctCount = Answer::query()
+            $correctCount =
+                Answer::query()
                 ->where(
                     'room_id',
                     $room->id,
                 )
                 ->where(
                     'question_id',
-                    $room->current_question_id,
+                    $displayQuestion->id,
                 )
                 ->where(
                     'is_correct',
@@ -507,53 +464,41 @@ class RoomParticipantController extends Controller
                 ? 'no_elimination'
                 : 'normal';
 
-            /*
-             * Peserta aktif berarti dia masih
-             * berpartisipasi pada current question.
-             */
             if (
                 $participant->status ===
                 ParticipantStatus::Active
             ) {
-                $currentAnswer = Answer::query()
-                    ->where(
-                        'participant_id',
-                        $participant->id,
-                    )
-                    ->where(
-                        'question_id',
-                        $room->current_question_id,
-                    )
-                    ->first();
-
-                if ($currentAnswer) {
-                    $answerResult =
-                        $currentAnswer
-                        ->is_correct
-                        ? 'correct'
-                        : 'wrong';
-                } else {
+                if (!$currentAnswer) {
                     $answerResult =
                         'no_answer';
+                } elseif (
+                    $currentAnswer->is_correct
+                ) {
+                    $answerResult =
+                        'correct';
+                } else {
+                    $answerResult =
+                        'wrong';
                 }
             }
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Response
-        |--------------------------------------------------------------------------
-        */
 
         $data = [
             'revision' =>
             $room->revision,
 
             'room_status' =>
-            $room->status->value,
+            $room
+                ->status
+                ->value,
 
             'game_phase' =>
-            $room->game_phase?->value,
+            $room
+                ->game_phase
+                ?->value,
+
+            'participant_view' =>
+            $participantView,
 
             'participant_status' =>
             $participant
@@ -579,22 +524,9 @@ class RoomParticipantController extends Controller
             $roundResult,
         ];
 
-        /*
-        |--------------------------------------------------------------------------
-        | Send Question
-        |--------------------------------------------------------------------------
-        |
-        | Soal hanya boleh dikirim:
-        |
-        | - room running
-        | - phase open
-        | - participant active
-        |
-        | is_correct TIDAK PERNAH dikirim.
-        |
-        */
-
         if (
+            $participantView ===
+            'question' &&
             $room->status ===
             RoomStatus::Running &&
             $room->game_phase ===
@@ -647,17 +579,12 @@ class RoomParticipantController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Submit Answer
-    |--------------------------------------------------------------------------
-    */
-
     public function answer(
         SubmitAnswerRequest $request,
         string $code,
     ): RedirectResponse {
-        $room = $this->roomByCode($code);
+        $room =
+            $this->roomByCode($code);
 
         $participant =
             $this->participantFromSession(
@@ -677,12 +604,6 @@ class RoomParticipantController extends Controller
                 $room,
                 $participant,
             ) {
-                /*
-                |--------------------------------------------------------------------------
-                | Lock Room
-                |--------------------------------------------------------------------------
-                */
-
                 $room = Room::query()
                     ->whereKey($room->id)
                     ->lockForUpdate()
@@ -708,12 +629,6 @@ class RoomParticipantController extends Controller
                     'Tidak ada soal aktif.',
                 );
 
-                /*
-                |--------------------------------------------------------------------------
-                | Participant
-                |--------------------------------------------------------------------------
-                */
-
                 $participant =
                     Participant::query()
                     ->whereKey(
@@ -732,12 +647,6 @@ class RoomParticipantController extends Controller
                     422,
                     'Peserta sudah tidak aktif.',
                 );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Validate Option
-                |--------------------------------------------------------------------------
-                */
 
                 $option =
                     QuestionOption::query()
@@ -758,12 +667,6 @@ class RoomParticipantController extends Controller
                     'Pilihan jawaban tidak valid untuk soal ini.',
                 );
 
-                /*
-                |--------------------------------------------------------------------------
-                | Prevent Duplicate
-                |--------------------------------------------------------------------------
-                */
-
                 $alreadyAnswered =
                     Answer::query()
                     ->where(
@@ -781,12 +684,6 @@ class RoomParticipantController extends Controller
                     422,
                     'Jawaban sudah dikirim dan tidak dapat diubah.',
                 );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Save
-                |--------------------------------------------------------------------------
-                */
 
                 Answer::create([
                     'room_id' =>
@@ -813,11 +710,163 @@ class RoomParticipantController extends Controller
         return back();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Helpers
-    |--------------------------------------------------------------------------
-    */
+    private function resolveParticipantView(
+        Room $room,
+        Participant $participant,
+    ): string {
+        if (
+            $room->status ===
+            RoomStatus::Finished
+        ) {
+            return 'finished';
+        }
+
+        if (
+            $participant->status ===
+            ParticipantStatus::Eliminated
+        ) {
+            return 'result';
+        }
+
+        if (
+            $room->status !==
+            RoomStatus::Running
+        ) {
+            return 'ready';
+        }
+
+        if (
+            $room->game_phase ===
+            GamePhase::Open
+        ) {
+            return 'question';
+        }
+
+        if (
+            $room->game_phase ===
+            GamePhase::Result
+        ) {
+            return 'result';
+        }
+
+        if (
+            $room->game_phase ===
+            GamePhase::Ready
+        ) {
+            $currentQuestion =
+                $this->currentQuestion(
+                    $room,
+                );
+
+            if (
+                !$currentQuestion ||
+                (int) $currentQuestion
+                    ->game_order <= 1
+            ) {
+                return 'ready';
+            }
+
+            return 'result';
+        }
+
+        return 'ready';
+    }
+
+    private function resolveDisplayQuestion(
+        Room $room,
+        Participant $participant,
+    ): ?Question {
+        if (
+            $participant->status ===
+            ParticipantStatus::Eliminated &&
+            $participant
+            ->eliminated_question_id
+        ) {
+            return Question::query()
+                ->whereKey(
+                    $participant
+                        ->eliminated_question_id,
+                )
+                ->where(
+                    'room_id',
+                    $room->id,
+                )
+                ->first();
+        }
+
+        if (
+            $room->status !==
+            RoomStatus::Running
+        ) {
+            return null;
+        }
+
+        $currentQuestion =
+            $this->currentQuestion(
+                $room,
+            );
+
+        if (!$currentQuestion) {
+            return null;
+        }
+
+        if (
+            $room->game_phase ===
+            GamePhase::Open ||
+            $room->game_phase ===
+            GamePhase::Result
+        ) {
+            return $currentQuestion;
+        }
+
+        if (
+            $room->game_phase ===
+            GamePhase::Ready &&
+            (int) $currentQuestion
+                ->game_order > 1
+        ) {
+            return Question::query()
+                ->where(
+                    'room_id',
+                    $room->id,
+                )
+                ->whereNotNull(
+                    'closed_at',
+                )
+                ->where(
+                    'game_order',
+                    '<',
+                    $currentQuestion
+                        ->game_order,
+                )
+                ->orderByDesc(
+                    'game_order',
+                )
+                ->first();
+        }
+
+        return null;
+    }
+
+    private function currentQuestion(
+        Room $room,
+    ): ?Question {
+        if (
+            !$room->current_question_id
+        ) {
+            return null;
+        }
+
+        return Question::query()
+            ->whereKey(
+                $room->current_question_id,
+            )
+            ->where(
+                'room_id',
+                $room->id,
+            )
+            ->first();
+    }
 
     private function roomByCode(
         string $code,
@@ -839,7 +888,9 @@ class RoomParticipantController extends Controller
         $sessionParticipant =
             $request
             ->session()
-            ->get('participant');
+            ->get(
+                'participant',
+            );
 
         if (
             !is_array(

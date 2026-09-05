@@ -1,6 +1,18 @@
 <script setup lang="ts">
-    import { usePolling } from '@/composables/game/usePolling'
+    import {
+        usePolling,
+    } from '@/composables/game/usePolling'
+
     import ParticipantLayout from '@/layouts/participant/ParticipantLayout.vue'
+
+    import {
+        home,
+    } from '@/routes'
+
+    import {
+        answer as answerRoute,
+        state as stateRoute,
+    } from '@/routes/participant'
 
     import {
         Head,
@@ -8,7 +20,9 @@
         useForm,
     } from '@inertiajs/vue3'
 
-    import { ref } from 'vue'
+    import {
+        ref,
+    } from 'vue'
 
     type OptionLabel =
         | 'A'
@@ -33,6 +47,12 @@
         | 'active'
         | 'eliminated'
         | 'winner'
+
+    type ParticipantView =
+        | 'ready'
+        | 'question'
+        | 'result'
+        | 'finished'
 
     type AnswerResult =
         | 'correct'
@@ -65,6 +85,9 @@
 
         game_phase: GamePhase
 
+        participant_view:
+        ParticipantView
+
         participant_status:
         ParticipantStatus
 
@@ -92,6 +115,7 @@
             code: string
             status: RoomStatus
             game_phase: GamePhase
+            participant_view: ParticipantView
             revision: number
         }
 
@@ -102,20 +126,15 @@
         }
     }>()
 
-    /*
-    |--------------------------------------------------------------------------
-    | State
-    |--------------------------------------------------------------------------
-    */
-
     const roomStatus =
         ref<RoomStatus>(
             props.room.status,
         )
 
-    const phase =
-        ref<GamePhase>(
-            props.room.game_phase,
+    const participantView =
+        ref<ParticipantView>(
+            props.room
+                .participant_view,
         )
 
     const participantStatus =
@@ -146,25 +165,14 @@
             null,
         )
 
-    /*
-    |--------------------------------------------------------------------------
-    | Form
-    |--------------------------------------------------------------------------
-    */
-
     const answerForm = useForm<{
         question_option_id:
         | number
         | null
     }>({
-        question_option_id: null,
+        question_option_id:
+            null,
     })
-
-    /*
-    |--------------------------------------------------------------------------
-    | Select Option
-    |--------------------------------------------------------------------------
-    */
 
     const selectOption = (
         optionId: number,
@@ -182,12 +190,6 @@
         answerForm.clearErrors()
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Submit
-    |--------------------------------------------------------------------------
-    */
-
     const submitAnswer = () => {
         if (
             selectedOptionId.value ===
@@ -202,7 +204,9 @@
             selectedOptionId.value
 
         answerForm.post(
-            `/participant/room/${props.room.code}/answer`,
+            answerRoute({
+                code: props.room.code,
+            }).url,
             {
                 preserveScroll: true,
 
@@ -216,28 +220,20 @@
         )
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Polling
-    |--------------------------------------------------------------------------
-    */
-
     usePolling<GameState>(
-        `/participant/room/${props.room.code}/state`,
+        stateRoute({
+            code: props.room.code,
+        }).url,
         (state) => {
             roomStatus.value =
                 state.room_status
 
-            phase.value =
-                state.game_phase
+            participantView.value =
+                state.participant_view
 
             participantStatus.value =
                 state.participant_status
 
-            /*
-             * Jika server mengirim soal baru,
-             * reset jawaban lokal soal sebelumnya.
-             */
             if (
                 state.question &&
                 question.value?.id !==
@@ -263,16 +259,9 @@
             question.value =
                 state.question
 
-            /*
-             * Server adalah sumber status submit.
-             */
             answerSubmitted.value =
                 state.answer.submitted
 
-            /*
-             * Jangan menimpa pilihan lokal
-             * sebelum jawaban benar-benar terkirim.
-             */
             if (
                 state.answer.submitted
             ) {
@@ -295,16 +284,13 @@
     <Head title="Permainan — SiOne" />
 
     <ParticipantLayout>
-        <!-- =====================================================
-        WINNER
-        ====================================================== -->
+        <!-- WINNER -->
 
         <div v-if="
             roomStatus === 'finished' &&
             participantStatus === 'winner'
         "
             class="fixed inset-0 z-50 flex min-h-svh items-center justify-center overflow-y-auto bg-slate-950 p-5 text-white sm:p-8">
-            <!-- Decoration -->
             <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
                 <div class="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
 
@@ -315,15 +301,11 @@
                 <div
                     class="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-amber-400 text-slate-950 shadow-2xl shadow-amber-500/20 sm:h-28 sm:w-28">
                     <svg class="h-12 w-12 sm:h-14 sm:w-14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M8 21h8" />
-
                         <path d="M12 17v4" />
-
                         <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
-
                         <path d="M7 6H4v2a4 4 0 0 0 4 4" />
-
                         <path d="M17 6h3v2a4 4 0 0 1-4 4" />
                     </svg>
                 </div>
@@ -337,16 +319,13 @@
                 </h1>
 
                 <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-300 sm:text-lg">
-                    Kamu berhasil bertahan hingga akhir dan menjadi
-                    pemenang SiOne.
+                    Kamu berhasil bertahan hingga akhir dan menjadi pemenang SiOne.
                 </p>
 
-                <!-- Winner Identity -->
                 <div
                     class="mx-auto mt-8 flex max-w-sm items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-left backdrop-blur">
                     <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10">
-                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="7" r="4" />
 
                             <path d="M20 21a8 8 0 0 0-16 0" />
@@ -368,16 +347,14 @@
                     </div>
                 </div>
 
-                <Link href="/"
+                <Link :href="home()"
                     class="mt-8 inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-6 py-3 font-bold text-slate-950 transition hover:bg-slate-100">
                     Kembali ke Halaman Awal
                 </Link>
             </div>
         </div>
 
-        <!-- =====================================================
-        ELIMINATED
-        ====================================================== -->
+        <!-- ELIMINATED -->
 
         <div v-else-if="
             participantStatus ===
@@ -388,8 +365,9 @@
                 <div
                     class="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white/15 sm:h-28 sm:w-28">
                     <svg class="h-12 w-12 sm:h-14 sm:w-14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 6 6 18" />
+
                         <path d="m6 6 12 12" />
                     </svg>
                 </div>
@@ -416,27 +394,27 @@
                     Terima kasih sudah mengikuti SiOne.
                 </p>
 
-                <Link href="/"
+                <Link :href="home()"
                     class="mt-8 inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-6 py-3 font-bold text-red-600 transition hover:bg-red-50">
                     Kembali ke Halaman Awal
                 </Link>
             </div>
         </div>
 
-        <!-- =====================================================
-        CORRECT
-        ====================================================== -->
+        <!-- CORRECT -->
 
         <div v-else-if="
-            phase === 'result' &&
-            answerResult === 'correct'
+            participantView ===
+            'result' &&
+            answerResult ===
+            'correct'
         "
             class="fixed inset-0 z-50 flex min-h-svh items-center justify-center overflow-y-auto bg-emerald-600 p-5 text-white sm:p-8">
             <div class="mx-auto w-full max-w-lg text-center">
                 <div
                     class="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white/15 sm:h-28 sm:w-28">
                     <svg class="h-12 w-12 sm:h-14 sm:w-14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m5 12 4 4L19 6" />
                     </svg>
                 </div>
@@ -467,12 +445,11 @@
             </div>
         </div>
 
-        <!-- =====================================================
-        NO ELIMINATION
-        ====================================================== -->
+        <!-- NO ELIMINATION -->
 
         <div v-else-if="
-            phase === 'result' &&
+            participantView ===
+            'result' &&
             roundResult ===
             'no_elimination'
         "
@@ -481,10 +458,11 @@
                 <div
                     class="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white/25 sm:h-28 sm:w-28">
                     <svg class="h-11 w-11 sm:h-13 sm:w-13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10" />
 
                         <path d="M12 8v5" />
+
                         <path d="M12 17h.01" />
                     </svg>
                 </div>
@@ -525,18 +503,14 @@
             </div>
         </div>
 
-        <!-- =====================================================
-        NORMAL GAME
-        ====================================================== -->
+        <!-- NORMAL GAME -->
 
         <div v-else class="mx-auto w-full max-w-3xl">
-            <!-- Participant Bar -->
             <div
                 class="mb-4 flex items-center gap-3 rounded-2xl border border-white/80 bg-white/90 p-3.5 shadow-sm backdrop-blur sm:p-4">
                 <div
                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="7" r="4" />
 
                         <path d="M20 21a8 8 0 0 0-16 0" />
@@ -565,25 +539,23 @@
                 </div>
             </div>
 
-            <!-- =================================================
-            READY
-            ================================================== -->
+            <!-- READY - HANYA AWAL GAME -->
 
             <div v-if="
-                phase === 'ready' &&
+                participantView ===
+                'ready' &&
                 participantStatus ===
                 'active'
             "
                 class="overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/90 p-6 text-center shadow-xl shadow-slate-200/50 backdrop-blur sm:p-10">
-                <div class="relative mx-auto flex h-24 w-24 items-center justify-center" aria-hidden="true">
+                <div class="relative mx-auto flex h-24 w-24 items-center justify-center">
                     <div class="absolute inset-0 animate-ping rounded-full bg-indigo-100 opacity-50" />
 
                     <div class="absolute inset-3 rounded-full bg-indigo-50" />
 
                     <div
                         class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-                        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 2v4" />
                             <path d="m16.2 7.8 2.9-2.9" />
                             <path d="M18 12h4" />
@@ -597,7 +569,7 @@
                 </div>
 
                 <p class="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
-                    Siap untuk soal berikutnya
+                    Pertandingan Dimulai
                 </p>
 
                 <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
@@ -605,23 +577,20 @@
                 </h1>
 
                 <p class="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-500 sm:text-base">
-                    Tetap fokus. Soal akan tampil otomatis ketika admin
-                    membuka ronde berikutnya.
+                    Tetap fokus. Soal pertama akan tampil otomatis ketika admin membukanya.
                 </p>
             </div>
 
-            <!-- =================================================
-            OPEN QUESTION
-            ================================================== -->
+            <!-- OPEN QUESTION -->
 
             <div v-else-if="
-                phase === 'open' &&
+                participantView ===
+                'question' &&
                 question &&
                 participantStatus ===
                 'active'
             "
                 class="overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/95 shadow-xl shadow-slate-200/50 backdrop-blur">
-                <!-- Question Header -->
                 <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
                     <div>
                         <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
@@ -650,7 +619,7 @@
                     <div v-else
                         class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600">
                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            stroke-width="2.5">
                             <path d="m5 12 4 4L19 6" />
                         </svg>
 
@@ -658,7 +627,6 @@
                     </div>
                 </div>
 
-                <!-- Question -->
                 <div class="px-5 pt-6 sm:px-7 sm:pt-7">
                     <h1 class="text-xl font-extrabold leading-relaxed text-slate-950 sm:text-2xl lg:text-[1.75rem]">
                         {{ question.text }}
@@ -671,7 +639,6 @@
                     </p>
                 </div>
 
-                <!-- Options -->
                 <div class="space-y-3 px-5 pb-2 pt-6 sm:px-7 sm:pt-7">
                     <button v-for="
 option in
@@ -716,14 +683,13 @@ option in
                         "
                             class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white">
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                stroke-width="2.5">
                                 <path d="m5 12 4 4L19 6" />
                             </svg>
                         </div>
                     </button>
                 </div>
 
-                <!-- Error -->
                 <p v-if="
                     answerForm.errors
                         .question_option_id
@@ -735,7 +701,6 @@ option in
                     }}
                 </p>
 
-                <!-- Submit -->
                 <div v-if="
                     !answerSubmitted
                 " class="mt-5 border-t border-slate-100 bg-slate-50/50 px-5 py-5 sm:px-7 sm:py-6">
@@ -747,7 +712,7 @@ option in
                         @click="submitAnswer">
                         <svg v-if="
                             answerForm.processing
-                        " class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        " class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
 
                             <path class="opacity-75" fill="currentColor"
@@ -768,25 +733,22 @@ option in
                             selectedOptionId !==
                             null
                         " class="h-5 w-5 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-                            stroke-linejoin="round" aria-hidden="true">
+                            fill="none" stroke="currentColor" stroke-width="2.2">
                             <path d="M5 12h14" />
+
                             <path d="m13 6 6 6-6 6" />
                         </svg>
                     </button>
 
                     <p class="mt-3 text-center text-xs leading-5 text-slate-400">
-                        Pastikan pilihanmu benar. Jawaban tidak dapat
-                        diubah setelah dikirim.
+                        Pastikan pilihanmu benar. Jawaban tidak dapat diubah setelah dikirim.
                     </p>
                 </div>
 
-                <!-- Submitted -->
                 <div v-else class="mt-5 border-t border-indigo-100 bg-indigo-50/70 px-5 py-6 text-center sm:px-7">
                     <div
                         class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <path d="m5 12 4 4L19 6" />
                         </svg>
                     </div>
@@ -796,15 +758,12 @@ option in
                     </div>
 
                     <p class="mx-auto mt-1 max-w-sm text-sm leading-6 text-slate-500">
-                        Jawabanmu sudah dikunci. Tunggu admin
-                        mengumumkan hasil ronde.
+                        Jawabanmu sudah dikunci. Tunggu admin mengumumkan hasil ronde.
                     </p>
                 </div>
             </div>
 
-            <!-- =================================================
-            FINISHED NON-WINNER
-            ================================================== -->
+            <!-- FINISHED NON-WINNER -->
 
             <div v-else-if="
                 roomStatus ===
@@ -812,10 +771,8 @@ option in
             "
                 class="rounded-[1.75rem] border border-white/80 bg-white/90 p-7 text-center shadow-xl shadow-slate-200/50 sm:p-10">
                 <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
-                    <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M8 2v4" />
-
                         <path d="M16 2v4" />
 
                         <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -833,15 +790,13 @@ option in
                     Terima kasih telah mengikuti pertandingan SiOne.
                 </p>
 
-                <Link href="/"
+                <Link :href="home()"
                     class="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 font-bold text-white transition hover:bg-indigo-700">
                     Kembali ke Halaman Awal
                 </Link>
             </div>
 
-            <!-- =================================================
-            FALLBACK
-            ================================================== -->
+            <!-- FALLBACK -->
 
             <div v-else
                 class="rounded-[1.75rem] border border-white/80 bg-white/90 p-8 text-center shadow-xl shadow-slate-200/50">

@@ -84,6 +84,13 @@
     "file": "assets/instrument-sans-600-normal-B9e8oLYv.woff",
     "src": "_instrument-sans-600-normal-B9e8oLYv.woff"
   },
+  "_participant-DIQjPBPf.js": {
+    "file": "assets/participant-DIQjPBPf.js",
+    "name": "participant",
+    "imports": [
+      "_wayfinder-Dp7PqxvV.js"
+    ]
+  },
   "_password-Cv1ltRdS.js": {
     "file": "assets/password-Cv1ltRdS.js",
     "name": "password",
@@ -130,7 +137,7 @@
     "isEntry": true
   },
   "resources/js/app.ts": {
-    "file": "assets/app-DbknF7er.js",
+    "file": "assets/app-DaTnBSmU.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -159,7 +166,7 @@
     ]
   },
   "resources/js/pages/Welcome.vue": {
-    "file": "assets/Welcome-CV0PqAPF.js",
+    "file": "assets/Welcome-EyihE8wI.js",
     "name": "Welcome",
     "src": "resources/js/pages/Welcome.vue",
     "isDynamicEntry": true,
@@ -168,7 +175,8 @@
       "_wayfinder-Dp7PqxvV.js",
       "resources/js/app.ts",
       "_SiOneLogo-rQgk2Tns.js",
-      "_rooms-COFqjwEB.js"
+      "_rooms-COFqjwEB.js",
+      "_participant-DIQjPBPf.js"
     ]
   },
   "resources/js/pages/admin/dashboard/Index.vue": {
@@ -235,7 +243,7 @@
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-g75wVAUO.js",
+    "file": "assets/ForgotPassword-CC_XBgNd.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
@@ -278,12 +286,14 @@
     ]
   },
   "resources/js/pages/participant/Game.vue": {
-    "file": "assets/Game-DgjnDLf3.js",
+    "file": "assets/Game-Cr1jsFdz.js",
     "name": "Game",
     "src": "resources/js/pages/participant/Game.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
+      "resources/js/app.ts",
+      "_participant-DIQjPBPf.js",
       "_usePolling-Chl-ZU6L.js",
       "_ParticipantLayout-PaxfhuAn.js"
     ]
@@ -310,7 +320,7 @@
     ]
   },
   "resources/js/pages/settings/Appearance.vue": {
-    "file": "assets/Appearance-Dx13Rzir.js",
+    "file": "assets/Appearance-B9sm1Vgc.js",
     "name": "Appearance",
     "src": "resources/js/pages/settings/Appearance.vue",
     "isDynamicEntry": true,
