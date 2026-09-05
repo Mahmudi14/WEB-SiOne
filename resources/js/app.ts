@@ -1,32 +1,90 @@
-import { createInertiaApp } from '@inertiajs/vue3';
-import { initializeTheme } from '@/composables/useAppearance';
-import AuthLayout from '@/layouts/AuthLayout.vue';
-import { initializeFlashToast } from '@/lib/flashToast';
+import { createInertiaApp } from '@inertiajs/vue3'
 
-const appName = import.meta.env.VITE_APP_NAME || 'Ranking Satu';
+import {
+    initializeTheme,
+} from '@/composables/useAppearance'
+
+import AuthLayout from '@/layouts/AuthLayout.vue'
+
+import {
+    initializeFlashToast,
+} from '@/lib/flashToast'
+
+const appName =
+    import.meta.env.VITE_APP_NAME ||
+    'Ranking Satu'
 
 void createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) =>
+        title
+            ? `${title} - ${appName}`
+            : appName,
 
     layout: (name) => {
-        // Untuk sementara halaman auth tetap menggunakan
-        // layout authentication bawaan.
-        if (name.startsWith('auth/')) {
-            return AuthLayout;
+        /*
+        |--------------------------------------------------------------------------
+        | Login
+        |--------------------------------------------------------------------------
+        |
+        | Login SiOne mempunyai full-page layout sendiri.
+        | Jangan bungkus dengan AuthLayout.
+        |
+        */
+
+        if (
+            name === 'auth/Login'
+        ) {
+            return null
         }
 
-        // Admin, participant, dan halaman lainnya
-        // menentukan layout masing-masing di file Vue.
-        return null;
+        /*
+        |--------------------------------------------------------------------------
+        | Halaman Auth Lain
+        |--------------------------------------------------------------------------
+        |
+        | Forgot Password, Reset Password, Verify Email, dst
+        | masih boleh menggunakan AuthLayout bawaan.
+        |
+        */
+
+        if (
+            name.startsWith(
+                'auth/',
+            )
+        ) {
+            return AuthLayout
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Application Pages
+        |--------------------------------------------------------------------------
+        |
+        | Admin, participant, Welcome, dan halaman lainnya
+        | menentukan layout masing-masing.
+        |
+        */
+
+        return null
     },
 
     progress: {
         color: '#0094DE',
     },
-});
+})
 
-// Set light / dark mode saat aplikasi dimuat.
-initializeTheme();
+/*
+|--------------------------------------------------------------------------
+| Theme
+|--------------------------------------------------------------------------
+*/
 
-// Listen flash toast dari Laravel.
-initializeFlashToast();
+initializeTheme()
+
+/*
+|--------------------------------------------------------------------------
+| Flash Toast
+|--------------------------------------------------------------------------
+*/
+
+initializeFlashToast()

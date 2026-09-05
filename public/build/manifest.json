@@ -94,6 +94,13 @@
       "_createLucideIcon-kdgH2Mku.js"
     ]
   },
+  "_questions-0FgZRa8-.js": {
+    "file": "assets/questions-0FgZRa8-.js",
+    "name": "questions",
+    "imports": [
+      "_wayfinder-Dp7PqxvV.js"
+    ]
+  },
   "_usePolling-Chl-ZU6L.js": {
     "file": "assets/usePolling-Chl-ZU6L.js",
     "name": "usePolling",
@@ -106,7 +113,7 @@
     "name": "wayfinder"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BHyg75sF.css",
+    "file": "assets/app-Dq_2vE8N.css",
     "name": "app",
     "names": [
       "app.css"
@@ -115,7 +122,7 @@
     "isEntry": true
   },
   "resources/js/app.ts": {
-    "file": "assets/app-CY1RmLKw.js",
+    "file": "assets/app-BhKLEo08.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -144,13 +151,16 @@
     ]
   },
   "resources/js/pages/Welcome.vue": {
-    "file": "assets/Welcome-DKWxFlZx.js",
+    "file": "assets/Welcome-DkEu8o3q.js",
     "name": "Welcome",
     "src": "resources/js/pages/Welcome.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
-      "_SiOneLogo-rQgk2Tns.js"
+      "_wayfinder-Dp7PqxvV.js",
+      "resources/js/app.ts",
+      "_SiOneLogo-rQgk2Tns.js",
+      "_questions-0FgZRa8-.js"
     ]
   },
   "resources/js/pages/admin/dashboard/Index.vue": {
@@ -174,13 +184,13 @@
     ]
   },
   "resources/js/pages/admin/rooms/Edit.vue": {
-    "file": "assets/Edit-DW-nCB-v.js",
+    "file": "assets/Edit-C2kt4ozG.js",
     "name": "Edit",
     "src": "resources/js/pages/admin/rooms/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
-      "_wayfinder-Dp7PqxvV.js",
+      "_questions-0FgZRa8-.js",
       "_AdminLayout-DbOqsN7v.js"
     ]
   },
@@ -216,7 +226,7 @@
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-DVWQH70I.js",
+    "file": "assets/ForgotPassword-DWiirDr1.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
@@ -291,7 +301,7 @@
     ]
   },
   "resources/js/pages/settings/Appearance.vue": {
-    "file": "assets/Appearance-tLCV-Ubp.js",
+    "file": "assets/Appearance-B8qvRhiH.js",
     "name": "Appearance",
     "src": "resources/js/pages/settings/Appearance.vue",
     "isDynamicEntry": true,
