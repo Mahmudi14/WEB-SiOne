@@ -4,6 +4,10 @@
         useConfirm,
     } from '@/composables/useConfirm'
 
+    import {
+        importMethod as importQuestionsRoute,
+    } from '@/routes/admin/rooms/questions'
+
     import type {
         EditableRoom,
         RoomFormData,
@@ -527,90 +531,72 @@
         importForm.clearErrors()
     }
 
-    const importQuestions = () => {
-        if (
-            !props.room.can_edit_questions ||
-            !importForm.file ||
-            importForm.processing
-        ) {
-            return
-        }
-
-        const importQuestions =
-            async () => {
-                if (
-                    !props.room.can_edit_questions ||
-                    !importForm.file ||
-                    importForm.processing
-                ) {
-                    return
-                }
-
-                const confirmed =
-                    await askConfirm({
-                        title:
-                            'Impor Soal dari CSV?',
-
-                        description:
-                            'Seluruh soal dari file CSV akan ditambahkan ke daftar soal yang sudah ada. Soal lama tidak akan dihapus.',
-
-                        confirmText:
-                            'Impor Soal',
-
-                        cancelText:
-                            'Batal',
-
-                        tone:
-                            'success',
-                    })
-
-                if (!confirmed) {
-                    return
-                }
-
-                importForm.post(
-                    `/admin/rooms/${props.room.id}/questions/import`,
-                    {
-                        preserveScroll: true,
-
-                        forceFormData: true,
-
-                        onSuccess: () => {
-                            importForm.reset()
-
-                            if (
-                                importFileInput.value
-                            ) {
-                                importFileInput.value.value =
-                                    ''
-                            }
-                        },
-                    },
-                )
+    const importQuestions =
+        async () => {
+            if (
+                !props.room.can_edit_questions ||
+                !importForm.file ||
+                importForm.processing
+            ) {
+                return
             }
 
-        importForm.post(
-            `/admin/rooms/${props.room.id}/questions/import`,
-            {
-                preserveScroll: true,
-                forceFormData: true,
+            const confirmed =
+                await askConfirm({
+                    title:
+                        'Impor Soal dari CSV?',
 
-                onSuccess: () => {
-                    activeTab.value =
-                        'questions'
+                    description:
+                        'Seluruh soal dari file CSV akan ditambahkan ke daftar soal yang sudah ada.',
 
-                    importForm.reset()
+                    confirmText:
+                        'Impor Soal',
 
-                    if (
-                        importFileInput.value
-                    ) {
-                        importFileInput.value.value =
-                            ''
-                    }
+                    cancelText:
+                        'Batal',
+
+                    tone:
+                        'success',
+                })
+
+            if (!confirmed) {
+                return
+            }
+
+            importForm.post(
+                importQuestionsRoute({
+                    room:
+                        props.room.id,
+                }).url,
+                {
+                    preserveScroll: true,
+                    forceFormData: true,
+
+                    onSuccess: () => {
+                        /*
+                         * Tetap berada di tab Soal.
+                         */
+                        activeTab.value =
+                            'questions'
+
+                        /*
+                         * Bersihkan form.
+                         */
+                        importForm.reset()
+
+                        /*
+                         * Bersihkan native file input.
+                         */
+                        if (
+                            importFileInput.value
+                        ) {
+                            importFileInput.value.value =
+                                ''
+                        }
+                    },
                 },
-            },
-        )
-    }
+            )
+        }
 
     /*
     |--------------------------------------------------------------------------

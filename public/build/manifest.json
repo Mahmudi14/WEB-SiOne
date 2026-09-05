@@ -115,7 +115,7 @@
     "isEntry": true
   },
   "resources/js/app.ts": {
-    "file": "assets/app-BsmX1Qoh.js",
+    "file": "assets/app-CY1RmLKw.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -174,12 +174,13 @@
     ]
   },
   "resources/js/pages/admin/rooms/Edit.vue": {
-    "file": "assets/Edit-BzusY1xm.js",
+    "file": "assets/Edit-DW-nCB-v.js",
     "name": "Edit",
     "src": "resources/js/pages/admin/rooms/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
+      "_wayfinder-Dp7PqxvV.js",
       "_AdminLayout-DbOqsN7v.js"
     ]
   },
@@ -215,7 +216,7 @@
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-CxOT_69r.js",
+    "file": "assets/ForgotPassword-DVWQH70I.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
@@ -290,7 +291,7 @@
     ]
   },
   "resources/js/pages/settings/Appearance.vue": {
-    "file": "assets/Appearance-De6DRvVl.js",
+    "file": "assets/Appearance-tLCV-Ubp.js",
     "name": "Appearance",
     "src": "resources/js/pages/settings/Appearance.vue",
     "isDynamicEntry": true,
