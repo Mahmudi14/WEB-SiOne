@@ -1,80 +1,205 @@
 import {
+    onBeforeUnmount,
     onMounted,
-    onUnmounted,
-    ref,
 } from 'vue'
+
+interface PollingOptions {
+    interval?: number
+    immediate?: boolean
+}
+
+interface ErrorResponse {
+    message?: string
+}
 
 export function usePolling<T>(
     url: string,
-    onData: (data: T) => void,
-    interval = 2000,
+    onData: (
+        data: T,
+    ) => void,
+    options: PollingOptions = {},
 ) {
-    const loading = ref(false)
+    const interval =
+        options.interval ??
+        2000
 
-    let timer: number | null = null
+    const immediate =
+        options.immediate ??
+        true
 
-    const poll = async () => {
-        /*
-         * Jangan polling ketika tab browser
-         * sedang tidak aktif.
-         */
+    let timer:
+        | ReturnType<
+            typeof setInterval
+        >
+        | null = null
+
+    let controller:
+        | AbortController
+        | null = null
+
+    let processing =
+        false
+
+    let lastError =
+        ''
+
+    const dispatchError = (
+        errorMessage: string,
+    ) => {
         if (
-            document.hidden ||
-            loading.value
+            lastError ===
+            errorMessage
         ) {
             return
         }
 
-        loading.value = true
+        lastError =
+            errorMessage
+
+        window.dispatchEvent(
+            new CustomEvent(
+                'sione:error',
+                {
+                    detail: {
+                        title:
+                            'Terjadi Kesalahan',
+
+                        message:
+                            errorMessage,
+                    },
+                },
+            ),
+        )
+    }
+
+    const poll = async () => {
+        if (
+            processing ||
+            document.hidden
+        ) {
+            return
+        }
+
+        processing =
+            true
+
+        controller =
+            new AbortController()
 
         try {
-            const response = await fetch(url, {
-                method: 'GET',
+            const response =
+                await fetch(
+                    url,
+                    {
+                        method:
+                            'GET',
 
-                headers: {
-                    Accept: 'application/json',
-                },
+                        credentials:
+                            'same-origin',
 
-                credentials: 'same-origin',
-            })
+                        signal:
+                            controller
+                                .signal,
+
+                        headers: {
+                            Accept:
+                                'application/json',
+
+                            'X-Requested-With':
+                                'XMLHttpRequest',
+                        },
+                    },
+                )
 
             if (!response.ok) {
+                let errorMessage =
+                    `Gagal memperbarui status permainan (${response.status}).`
+
+                try {
+                    const errorData =
+                        await response
+                            .json() as ErrorResponse
+
+                    if (
+                        errorData
+                            .message
+                    ) {
+                        errorMessage =
+                            errorData
+                                .message
+                    }
+                } catch {
+                    //
+                }
+
+                dispatchError(
+                    errorMessage,
+                )
+
                 return
             }
 
             const data =
-                (await response.json()) as T
+                await response
+                    .json() as T
 
-            onData(data)
+            lastError =
+                ''
+
+            onData(
+                data,
+            )
+        } catch (error) {
+            if (
+                error instanceof
+                    DOMException &&
+                error.name ===
+                    'AbortError'
+            ) {
+                return
+            }
+
+            dispatchError(
+                'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+            )
         } finally {
-            loading.value = false
+            processing =
+                false
         }
     }
 
     const start = () => {
-        void poll()
-
-        timer = window.setInterval(
-            () => {
-                void poll()
-            },
-            interval,
-        )
-    }
-
-    const stop = () => {
-        if (timer !== null) {
-            window.clearInterval(timer)
-            timer = null
+        if (immediate) {
+            void poll()
         }
+
+        timer =
+            setInterval(
+                () => {
+                    void poll()
+                },
+                interval,
+            )
     }
 
-    onMounted(start)
-    onUnmounted(stop)
+    onMounted(
+        start,
+    )
+
+    onBeforeUnmount(
+        () => {
+            if (timer) {
+                clearInterval(
+                    timer,
+                )
+            }
+
+            controller
+                ?.abort()
+        },
+    )
 
     return {
         poll,
-        stop,
-        loading,
     }
 }

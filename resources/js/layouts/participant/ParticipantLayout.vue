@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import SiOneLogo from '@/components/SiOneLogo.vue'
+    import ParticipantErrorDialog from '@/components/ui/ParticipantErrorDialog.vue'
     defineProps<{
         title?: string
     }>()
@@ -62,5 +63,6 @@
                 SiOne · Sistem Ranking Satu Interaktif
             </div>
         </footer>
+        <ParticipantErrorDialog />
     </div>
 </template>

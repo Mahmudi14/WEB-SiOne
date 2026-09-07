@@ -1,4 +1,11 @@
 <script setup lang="ts">
+    import SiOneLogo from '@/components/SiOneLogo.vue'
+
+    import {
+        home,
+        login,
+    } from '@/routes'
+
     import {
         Head,
         Link,
@@ -32,7 +39,7 @@
         }
 
         form.post(
-            '/login',
+            login().url,
             {
                 preserveScroll: true,
 
@@ -52,12 +59,9 @@
 
     <main class="min-h-screen bg-slate-50">
         <div class="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
-            <!-- =================================================
-            LEFT / BRAND
-            ================================================== -->
+            <!-- LEFT / BRAND -->
 
             <section class="relative hidden overflow-hidden bg-bps-navy lg:flex lg:flex-col lg:justify-between">
-                <!-- Decoration -->
                 <div
                     class="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-bps-blue/20 blur-3xl" />
 
@@ -66,12 +70,11 @@
 
                 <div class="relative z-10 p-10 xl:p-14">
                     <!-- Brand -->
+
                     <div class="flex items-center gap-4">
                         <div
-                            class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10 backdrop-blur">
-                            <span class="text-xl font-black text-white">
-                                S1
-                            </span>
+                            class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/10 p-2 ring-1 ring-white/10 backdrop-blur">
+                            <SiOneLogo class="h-full w-full object-contain" />
                         </div>
 
                         <div>
@@ -86,6 +89,7 @@
                     </div>
 
                     <!-- Hero -->
+
                     <div class="mt-24 max-w-xl">
                         <div
                             class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-blue-100">
@@ -108,24 +112,21 @@
                     </div>
                 </div>
 
-                <!-- Bottom -->
                 <div class="relative z-10 p-10 text-sm text-blue-100/50 xl:p-14">
                     SiOne · Sistem Ranking 1
                 </div>
             </section>
 
-            <!-- =================================================
-            RIGHT / LOGIN
-            ================================================== -->
+            <!-- RIGHT / LOGIN -->
 
             <section class="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
                 <div class="w-full max-w-md">
                     <!-- Mobile Brand -->
+
                     <div class="mb-10 flex items-center gap-3 lg:hidden">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-bps-navy">
-                            <span class="font-black text-white">
-                                S1
-                            </span>
+                        <div
+                            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-bps-navy p-2 shadow-sm">
+                            <SiOneLogo class="h-full w-full object-contain" />
                         </div>
 
                         <div>
@@ -140,6 +141,7 @@
                     </div>
 
                     <!-- Heading -->
+
                     <div>
                         <div class="text-xs font-bold uppercase tracking-[0.18em] text-bps-blue">
                             Administrator
@@ -157,8 +159,10 @@
                     </div>
 
                     <!-- Form -->
+
                     <form class="mt-8 space-y-5" @submit.prevent="submit">
                         <!-- Email -->
+
                         <div>
                             <label for="email" class="mb-2 block text-sm font-semibold text-slate-700">
                                 Email
@@ -188,6 +192,7 @@
                         </div>
 
                         <!-- Password -->
+
                         <div>
                             <label for="password" class="mb-2 block text-sm font-semibold text-slate-700">
                                 Password
@@ -221,7 +226,6 @@
                                         showPassword =
                                         !showPassword
                                         ">
-                                    <!-- Eye -->
                                     <svg v-if="!showPassword" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
                                         stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                         stroke-linejoin="round">
@@ -231,7 +235,6 @@
                                         <circle cx="12" cy="12" r="3" />
                                     </svg>
 
-                                    <!-- Eye Off -->
                                     <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="m2 2 20 20" />
@@ -253,6 +256,7 @@
                         </div>
 
                         <!-- Remember -->
+
                         <label class="flex cursor-pointer items-center gap-3">
                             <input v-model="form.remember" type="checkbox"
                                 class="h-4 w-4 rounded border-slate-300 text-bps-blue focus:ring-bps-blue" />
@@ -263,6 +267,7 @@
                         </label>
 
                         <!-- Submit -->
+
                         <button type="submit" :disabled="!canSubmit"
                             class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-bps-navy px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-950/10 transition hover:bg-bps-blue focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200 disabled:pointer-events-none disabled:bg-slate-300 disabled:shadow-none">
                             <svg v-if="form.processing" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -291,8 +296,10 @@
                     </form>
 
                     <!-- Home -->
+
                     <div class="mt-8 border-t border-slate-200 pt-6 text-center">
-                        <Link href="/" class="text-sm font-semibold text-slate-500 transition hover:text-bps-blue">
+                        <Link :href="home()"
+                            class="text-sm font-semibold text-slate-500 transition hover:text-bps-blue">
                             ← Kembali ke halaman utama
                         </Link>
                     </div>

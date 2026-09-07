@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,7 +45,10 @@ class RoomParticipantController extends Controller
         );
 
         $room = Room::query()
-            ->where('code', $code)
+            ->where(
+                'code',
+                $code,
+            )
             ->first();
 
         if (!$room) {
@@ -95,25 +99,92 @@ class RoomParticipantController extends Controller
         string $code,
     ): Response|RedirectResponse {
         $room =
-            $this->roomByCode($code);
+            $this->roomByCode(
+                $code,
+            );
 
-        abort_unless(
-            $room->status ===
-                RoomStatus::Waiting,
-            404,
-        );
+        if (!$room) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'code' =>
+                'Kode room tidak ditemukan.',
+            ]);
+        }
 
-        $existingParticipant =
+        $participant =
             $this->participantFromSession(
                 $request,
                 $room,
             );
 
-        if ($existingParticipant) {
+        if (
+            $participant &&
+            $room->status ===
+            RoomStatus::Running
+        ) {
+            return to_route(
+                'participant.play',
+                $room->code,
+            );
+        }
+
+        if (
+            $participant &&
+            $room->status ===
+            RoomStatus::Finished
+        ) {
+            return to_route(
+                'participant.play',
+                $room->code,
+            );
+        }
+
+        if (
+            $participant &&
+            $room->status ===
+            RoomStatus::Waiting
+        ) {
             return to_route(
                 'participant.lobby',
                 $room->code,
             );
+        }
+
+        if (
+            $room->status ===
+            RoomStatus::Locked
+        ) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'code' =>
+                'Room belum dibuka oleh admin.',
+            ]);
+        }
+
+        if (
+            $room->status ===
+            RoomStatus::Running
+        ) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'code' =>
+                'Game sudah dimulai. Peserta baru tidak dapat bergabung.',
+            ]);
+        }
+
+        if (
+            $room->status ===
+            RoomStatus::Finished
+        ) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'code' =>
+                'Game pada room ini sudah selesai.',
+            ]);
         }
 
         return Inertia::render(
@@ -153,69 +224,94 @@ class RoomParticipantController extends Controller
             ]);
 
         $room =
-            $this->roomByCode($code);
+            $this->roomByCode(
+                $code,
+            );
 
-        $participant = DB::transaction(
-            function () use (
-                $room,
-                $validated,
-            ) {
-                $room = Room::query()
-                    ->whereKey($room->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+        if (!$room) {
+            $this->validationError(
+                'join',
+                'Room tidak ditemukan.',
+            );
+        }
 
-                abort_unless(
-                    $room->status ===
-                        RoomStatus::Waiting,
-                    422,
-                    'Room sudah tidak menerima peserta.',
-                );
+        $participant =
+            DB::transaction(
+                function () use (
+                    $room,
+                    $validated,
+                ) {
+                    $lockedRoom =
+                        Room::query()
+                        ->whereKey(
+                            $room->id,
+                        )
+                        ->lockForUpdate()
+                        ->first();
 
-                $participantCode =
-                    strtoupper(
+                    if (!$lockedRoom) {
+                        $this->validationError(
+                            'join',
+                            'Room tidak ditemukan.',
+                        );
+                    }
+
+                    if (
+                        $lockedRoom->status !==
+                        RoomStatus::Waiting
+                    ) {
+                        $this->validationError(
+                            'join',
+                            'Room sudah tidak menerima peserta.',
+                        );
+                    }
+
+                    $participantCode =
+                        strtoupper(
+                            trim(
+                                $validated['participant_code'],
+                            ),
+                        );
+
+                    $exists =
+                        Participant::query()
+                        ->where(
+                            'room_id',
+                            $lockedRoom->id,
+                        )
+                        ->where(
+                            'code',
+                            $participantCode,
+                        )
+                        ->exists();
+
+                    if ($exists) {
+                        $this->validationError(
+                            'participant_code',
+                            'Kode peserta sudah digunakan.',
+                        );
+                    }
+
+                    return Participant::create([
+                        'room_id' =>
+                        $lockedRoom->id,
+
+                        'name' =>
                         trim(
-                            $validated['participant_code'],
+                            $validated['name'],
                         ),
-                    );
 
-                $exists = Participant::query()
-                    ->where(
-                        'room_id',
-                        $room->id,
-                    )
-                    ->where(
-                        'code',
+                        'code' =>
                         $participantCode,
-                    )
-                    ->exists();
 
-                abort_if(
-                    $exists,
-                    422,
-                    'Kode peserta sudah digunakan.',
-                );
+                        'status' =>
+                        ParticipantStatus::Waiting,
 
-                return Participant::create([
-                    'room_id' =>
-                    $room->id,
-
-                    'name' =>
-                    trim(
-                        $validated['name'],
-                    ),
-
-                    'code' =>
-                    $participantCode,
-
-                    'status' =>
-                    ParticipantStatus::Waiting,
-
-                    'joined_at' =>
-                    now(),
-                ]);
-            },
-        );
+                        'joined_at' =>
+                        now(),
+                    ]);
+                },
+            );
 
         $request
             ->session()
@@ -241,7 +337,18 @@ class RoomParticipantController extends Controller
         string $code,
     ): Response|RedirectResponse {
         $room =
-            $this->roomByCode($code);
+            $this->roomByCode(
+                $code,
+            );
+
+        if (!$room) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'code' =>
+                'Room tidak ditemukan.',
+            ]);
+        }
 
         $participant =
             $this->participantFromSession(
@@ -249,15 +356,32 @@ class RoomParticipantController extends Controller
                 $room,
             );
 
-        abort_unless(
-            $participant,
-            403,
-            'Peserta belum bergabung ke room ini.',
-        );
+        if (!$participant) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'participant' =>
+                'Sesi peserta tidak ditemukan. Silakan masuk kembali ke room.',
+            ]);
+        }
 
         if (
             $room->status ===
-            RoomStatus::Running
+            RoomStatus::Locked
+        ) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'code' =>
+                'Room sedang terkunci.',
+            ]);
+        }
+
+        if (
+            $room->status ===
+            RoomStatus::Running ||
+            $room->status ===
+            RoomStatus::Finished
         ) {
             return to_route(
                 'participant.play',
@@ -305,7 +429,18 @@ class RoomParticipantController extends Controller
         string $code,
     ): Response|RedirectResponse {
         $room =
-            $this->roomByCode($code);
+            $this->roomByCode(
+                $code,
+            );
+
+        if (!$room) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'code' =>
+                'Room tidak ditemukan.',
+            ]);
+        }
 
         $participant =
             $this->participantFromSession(
@@ -313,11 +448,14 @@ class RoomParticipantController extends Controller
                 $room,
             );
 
-        abort_unless(
-            $participant,
-            403,
-            'Peserta belum bergabung ke room ini.',
-        );
+        if (!$participant) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'participant' =>
+                'Sesi peserta tidak ditemukan. Silakan masuk kembali ke room.',
+            ]);
+        }
 
         if (
             $room->status ===
@@ -327,6 +465,18 @@ class RoomParticipantController extends Controller
                 'participant.lobby',
                 $room->code,
             );
+        }
+
+        if (
+            $room->status ===
+            RoomStatus::Locked
+        ) {
+            return to_route(
+                'participant.index',
+            )->withErrors([
+                'code' =>
+                'Room sedang terkunci.',
+            ]);
         }
 
         $participantView =
@@ -383,7 +533,16 @@ class RoomParticipantController extends Controller
         string $code,
     ): JsonResponse {
         $room =
-            $this->roomByCode($code);
+            $this->roomByCode(
+                $code,
+            );
+
+        if (!$room) {
+            return response()->json([
+                'message' =>
+                'Room tidak ditemukan.',
+            ], 404);
+        }
 
         $participant =
             $this->participantFromSession(
@@ -391,11 +550,12 @@ class RoomParticipantController extends Controller
                 $room,
             );
 
-        abort_unless(
-            $participant,
-            403,
-            'Peserta belum bergabung ke room ini.',
-        );
+        if (!$participant) {
+            return response()->json([
+                'message' =>
+                'Sesi peserta sudah tidak tersedia. Silakan masuk kembali ke room.',
+            ], 403);
+        }
 
         $participantView =
             $this->resolveParticipantView(
@@ -412,7 +572,8 @@ class RoomParticipantController extends Controller
         $currentAnswer = null;
 
         if ($displayQuestion) {
-            $currentAnswer = Answer::query()
+            $currentAnswer =
+                Answer::query()
                 ->where(
                     'participant_id',
                     $participant->id,
@@ -472,7 +633,8 @@ class RoomParticipantController extends Controller
                     $answerResult =
                         'no_answer';
                 } elseif (
-                    $currentAnswer->is_correct
+                    $currentAnswer
+                    ->is_correct
                 ) {
                     $answerResult =
                         'correct';
@@ -535,20 +697,30 @@ class RoomParticipantController extends Controller
             ParticipantStatus::Active &&
             $room->current_question_id
         ) {
-            $question = $room
+            $question =
+                $room
                 ->questions()
                 ->with('options')
                 ->whereKey(
-                    $room->current_question_id,
+                    $room
+                        ->current_question_id,
                 )
-                ->firstOrFail();
+                ->first();
+
+            if (!$question) {
+                return response()->json([
+                    'message' =>
+                    'Soal aktif tidak ditemukan. Silakan hubungi admin.',
+                ], 422);
+            }
 
             $data['question'] = [
                 'id' =>
                 $question->id,
 
                 'number' =>
-                $question->game_order,
+                $question
+                    ->game_order,
 
                 'text' =>
                 $question->text,
@@ -584,7 +756,16 @@ class RoomParticipantController extends Controller
         string $code,
     ): RedirectResponse {
         $room =
-            $this->roomByCode($code);
+            $this->roomByCode(
+                $code,
+            );
+
+        if (!$room) {
+            $this->validationError(
+                'answer',
+                'Room tidak ditemukan.',
+            );
+        }
 
         $participant =
             $this->participantFromSession(
@@ -592,11 +773,12 @@ class RoomParticipantController extends Controller
                 $room,
             );
 
-        abort_unless(
-            $participant,
-            403,
-            'Peserta belum bergabung ke room ini.',
-        );
+        if (!$participant) {
+            $this->validationError(
+                'answer',
+                'Sesi peserta tidak ditemukan. Silakan masuk kembali ke room.',
+            );
+        }
 
         DB::transaction(
             function () use (
@@ -604,49 +786,79 @@ class RoomParticipantController extends Controller
                 $room,
                 $participant,
             ) {
-                $room = Room::query()
-                    ->whereKey($room->id)
+                $lockedRoom =
+                    Room::query()
+                    ->whereKey(
+                        $room->id,
+                    )
                     ->lockForUpdate()
-                    ->firstOrFail();
+                    ->first();
 
-                abort_unless(
-                    $room->status ===
-                        RoomStatus::Running,
-                    422,
-                    'Game tidak sedang berjalan.',
-                );
+                if (!$lockedRoom) {
+                    $this->validationError(
+                        'answer',
+                        'Room tidak ditemukan.',
+                    );
+                }
 
-                abort_unless(
-                    $room->game_phase ===
-                        GamePhase::Open,
-                    422,
-                    'Soal sedang tidak menerima jawaban.',
-                );
+                if (
+                    $lockedRoom->status !==
+                    RoomStatus::Running
+                ) {
+                    $this->validationError(
+                        'answer',
+                        'Game tidak sedang berjalan.',
+                    );
+                }
 
-                abort_unless(
-                    $room->current_question_id,
-                    422,
-                    'Tidak ada soal aktif.',
-                );
+                if (
+                    $lockedRoom->game_phase !==
+                    GamePhase::Open
+                ) {
+                    $this->validationError(
+                        'answer',
+                        'Soal sudah tidak menerima jawaban.',
+                    );
+                }
 
-                $participant =
+                if (
+                    !$lockedRoom
+                        ->current_question_id
+                ) {
+                    $this->validationError(
+                        'answer',
+                        'Tidak ada soal aktif.',
+                    );
+                }
+
+                $lockedParticipant =
                     Participant::query()
                     ->whereKey(
                         $participant->id,
                     )
                     ->where(
                         'room_id',
-                        $room->id,
+                        $lockedRoom->id,
                     )
                     ->lockForUpdate()
-                    ->firstOrFail();
+                    ->first();
 
-                abort_unless(
-                    $participant->status ===
-                        ParticipantStatus::Active,
-                    422,
-                    'Peserta sudah tidak aktif.',
-                );
+                if (!$lockedParticipant) {
+                    $this->validationError(
+                        'answer',
+                        'Data peserta tidak ditemukan.',
+                    );
+                }
+
+                if (
+                    $lockedParticipant->status !==
+                    ParticipantStatus::Active
+                ) {
+                    $this->validationError(
+                        'answer',
+                        'Peserta sudah tidak aktif dalam permainan.',
+                    );
+                }
 
                 $option =
                     QuestionOption::query()
@@ -657,49 +869,57 @@ class RoomParticipantController extends Controller
                     )
                     ->where(
                         'question_id',
-                        $room->current_question_id,
+                        $lockedRoom
+                            ->current_question_id,
                     )
                     ->first();
 
-                abort_unless(
-                    $option,
-                    422,
-                    'Pilihan jawaban tidak valid untuk soal ini.',
-                );
+                if (!$option) {
+                    $this->validationError(
+                        'question_option_id',
+                        'Pilihan jawaban tidak valid untuk soal ini.',
+                    );
+                }
 
                 $alreadyAnswered =
                     Answer::query()
                     ->where(
                         'participant_id',
-                        $participant->id,
+                        $lockedParticipant
+                            ->id,
                     )
                     ->where(
                         'question_id',
-                        $room->current_question_id,
+                        $lockedRoom
+                            ->current_question_id,
                     )
                     ->exists();
 
-                abort_if(
-                    $alreadyAnswered,
-                    422,
-                    'Jawaban sudah dikirim dan tidak dapat diubah.',
-                );
+                if ($alreadyAnswered) {
+                    $this->validationError(
+                        'answer',
+                        'Jawaban sudah dikirim dan tidak dapat diubah.',
+                    );
+                }
 
                 Answer::create([
                     'room_id' =>
-                    $room->id,
+                    $lockedRoom->id,
 
                     'participant_id' =>
-                    $participant->id,
+                    $lockedParticipant
+                        ->id,
 
                     'question_id' =>
-                    $room->current_question_id,
+                    $lockedRoom
+                        ->current_question_id,
 
                     'question_option_id' =>
                     $option->id,
 
                     'is_correct' =>
-                    $option->is_correct,
+                    $option
+                        ->is_correct,
 
                     'submitted_at' =>
                     now(),
@@ -859,7 +1079,8 @@ class RoomParticipantController extends Controller
 
         return Question::query()
             ->whereKey(
-                $room->current_question_id,
+                $room
+                    ->current_question_id,
             )
             ->where(
                 'room_id',
@@ -870,7 +1091,7 @@ class RoomParticipantController extends Controller
 
     private function roomByCode(
         string $code,
-    ): Room {
+    ): ?Room {
         return Room::query()
             ->where(
                 'code',
@@ -878,7 +1099,7 @@ class RoomParticipantController extends Controller
                     trim($code),
                 ),
             )
-            ->firstOrFail();
+            ->first();
     }
 
     private function participantFromSession(
@@ -929,5 +1150,15 @@ class RoomParticipantController extends Controller
                 $room->id,
             )
             ->first();
+    }
+
+    private function validationError(
+        string $field,
+        string $message,
+    ): never {
+        throw ValidationException::withMessages([
+            $field =>
+            $message,
+        ]);
     }
 }

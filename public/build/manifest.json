@@ -21,8 +21,8 @@
       "_dist-DYbTWcPd.js"
     ]
   },
-  "_ParticipantLayout-PaxfhuAn.js": {
-    "file": "assets/ParticipantLayout-PaxfhuAn.js",
+  "_ParticipantLayout-BLrrgonY.js": {
+    "file": "assets/ParticipantLayout-BLrrgonY.js",
     "name": "ParticipantLayout",
     "imports": [
       "_dist-DYbTWcPd.js",
@@ -84,11 +84,19 @@
     "file": "assets/instrument-sans-600-normal-B9e8oLYv.woff",
     "src": "_instrument-sans-600-normal-B9e8oLYv.woff"
   },
-  "_participant-DIQjPBPf.js": {
-    "file": "assets/participant-DIQjPBPf.js",
-    "name": "participant",
+  "_join-BMzZTi4C.js": {
+    "file": "assets/join-BMzZTi4C.js",
+    "name": "join",
     "imports": [
       "_wayfinder-Dp7PqxvV.js"
+    ]
+  },
+  "_participant-mKKukffr.js": {
+    "file": "assets/participant-mKKukffr.js",
+    "name": "participant",
+    "imports": [
+      "_wayfinder-Dp7PqxvV.js",
+      "_join-BMzZTi4C.js"
     ]
   },
   "_password-Cv1ltRdS.js": {
@@ -116,8 +124,8 @@
       "_questions-0FgZRa8-.js"
     ]
   },
-  "_usePolling-Chl-ZU6L.js": {
-    "file": "assets/usePolling-Chl-ZU6L.js",
+  "_usePolling-CgDslZKS.js": {
+    "file": "assets/usePolling-CgDslZKS.js",
     "name": "usePolling",
     "imports": [
       "_dist-DYbTWcPd.js"
@@ -128,7 +136,7 @@
     "name": "wayfinder"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Di4ZlCMR.css",
+    "file": "assets/app-DXE9r3pw.css",
     "name": "app",
     "names": [
       "app.css"
@@ -137,7 +145,7 @@
     "isEntry": true
   },
   "resources/js/app.ts": {
-    "file": "assets/app-DaTnBSmU.js",
+    "file": "assets/app-DPo1Fn_s.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -166,7 +174,7 @@
     ]
   },
   "resources/js/pages/Welcome.vue": {
-    "file": "assets/Welcome-EyihE8wI.js",
+    "file": "assets/Welcome-Bfno7V5t.js",
     "name": "Welcome",
     "src": "resources/js/pages/Welcome.vue",
     "isDynamicEntry": true,
@@ -176,7 +184,7 @@
       "resources/js/app.ts",
       "_SiOneLogo-rQgk2Tns.js",
       "_rooms-COFqjwEB.js",
-      "_participant-DIQjPBPf.js"
+      "_participant-mKKukffr.js"
     ]
   },
   "resources/js/pages/admin/dashboard/Index.vue": {
@@ -221,7 +229,7 @@
     ]
   },
   "resources/js/pages/admin/rooms/Play.vue": {
-    "file": "assets/Play-D5SD_mp_.js",
+    "file": "assets/Play-PuocyGC9.js",
     "name": "Play",
     "src": "resources/js/pages/admin/rooms/Play.vue",
     "isDynamicEntry": true,
@@ -229,7 +237,7 @@
       "_dist-DYbTWcPd.js",
       "_rooms-COFqjwEB.js",
       "_AdminLayout-DbOqsN7v.js",
-      "_usePolling-Chl-ZU6L.js"
+      "_usePolling-CgDslZKS.js"
     ]
   },
   "resources/js/pages/admin/rooms/Result.vue": {
@@ -243,7 +251,7 @@
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-CC_XBgNd.js",
+    "file": "assets/ForgotPassword-DqKlf6kD.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
@@ -255,12 +263,14 @@
     ]
   },
   "resources/js/pages/auth/Login.vue": {
-    "file": "assets/Login-C9Umq8Qm.js",
+    "file": "assets/Login-Ba12YaUv.js",
     "name": "Login",
     "src": "resources/js/pages/auth/Login.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_dist-DYbTWcPd.js"
+      "_dist-DYbTWcPd.js",
+      "resources/js/app.ts",
+      "_SiOneLogo-rQgk2Tns.js"
     ]
   },
   "resources/js/pages/auth/ResetPassword.vue": {
@@ -276,51 +286,52 @@
     ]
   },
   "resources/js/pages/participant/FindRoom.vue": {
-    "file": "assets/FindRoom-C7x5DXjd.js",
+    "file": "assets/FindRoom-CnYtcG_5.js",
     "name": "FindRoom",
     "src": "resources/js/pages/participant/FindRoom.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
-      "_ParticipantLayout-PaxfhuAn.js"
+      "_ParticipantLayout-BLrrgonY.js"
     ]
   },
   "resources/js/pages/participant/Game.vue": {
-    "file": "assets/Game-Cr1jsFdz.js",
+    "file": "assets/Game-65SAdZa0.js",
     "name": "Game",
     "src": "resources/js/pages/participant/Game.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
       "resources/js/app.ts",
-      "_participant-DIQjPBPf.js",
-      "_usePolling-Chl-ZU6L.js",
-      "_ParticipantLayout-PaxfhuAn.js"
+      "_participant-mKKukffr.js",
+      "_usePolling-CgDslZKS.js",
+      "_ParticipantLayout-BLrrgonY.js"
     ]
   },
   "resources/js/pages/participant/JoinRoom.vue": {
-    "file": "assets/JoinRoom-CK8Am6BM.js",
+    "file": "assets/JoinRoom-BnDW55XK.js",
     "name": "JoinRoom",
     "src": "resources/js/pages/participant/JoinRoom.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
-      "_ParticipantLayout-PaxfhuAn.js"
+      "_join-BMzZTi4C.js",
+      "_ParticipantLayout-BLrrgonY.js"
     ]
   },
   "resources/js/pages/participant/Lobby.vue": {
-    "file": "assets/Lobby-ILkq8tUh.js",
+    "file": "assets/Lobby-6bZ54vxn.js",
     "name": "Lobby",
     "src": "resources/js/pages/participant/Lobby.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DYbTWcPd.js",
-      "_usePolling-Chl-ZU6L.js",
-      "_ParticipantLayout-PaxfhuAn.js"
+      "_usePolling-CgDslZKS.js",
+      "_ParticipantLayout-BLrrgonY.js"
     ]
   },
   "resources/js/pages/settings/Appearance.vue": {
-    "file": "assets/Appearance-B9sm1Vgc.js",
+    "file": "assets/Appearance-C6hEc2xV.js",
     "name": "Appearance",
     "src": "resources/js/pages/settings/Appearance.vue",
     "isDynamicEntry": true,

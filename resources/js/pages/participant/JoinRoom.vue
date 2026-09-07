@@ -1,6 +1,14 @@
 <script setup lang="ts">
     import ParticipantLayout from '@/layouts/participant/ParticipantLayout.vue'
-    import { Head, useForm } from '@inertiajs/vue3'
+
+    import {
+        store as joinRoomRoute,
+    } from '@/routes/participant/join'
+
+    import {
+        Head,
+        useForm,
+    } from '@inertiajs/vue3'
 
     const props = defineProps<{
         room: {
@@ -16,8 +24,21 @@
     })
 
     const submit = () => {
+        if (
+            form.processing ||
+            !form.name.trim() ||
+            !form.participant_code.trim()
+        ) {
+            return
+        }
+
         form.post(
-            `/participant/room/${props.room.code}/join`,
+            joinRoomRoute({
+                code: props.room.code,
+            }).url,
+            {
+                preserveScroll: true,
+            },
         )
     }
 </script>
@@ -30,18 +51,21 @@
         <section class="mx-auto w-full max-w-md">
             <div
                 class="relative overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/90 p-5 shadow-2xl shadow-slate-300/40 backdrop-blur-xl sm:p-7">
-                <!-- Accent -->
                 <div class="absolute left-1/2 top-0 h-1 w-20 -translate-x-1/2 rounded-b-full bg-indigo-600" />
 
                 <!-- Room Information -->
+
                 <div class="text-center">
                     <div
                         class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
                         <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M3 7h18" />
+
                             <path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+
                             <path d="M8 11h8" />
+
                             <path d="M8 15h5" />
                         </svg>
                     </div>
@@ -65,56 +89,48 @@
                 </div>
 
                 <!-- Form -->
+
                 <form class="mt-7 space-y-5" @submit.prevent="submit">
                     <!-- Name -->
+
                     <div>
                         <label for="participant-name" class="mb-2 block text-sm font-semibold text-slate-700">
                             Nama Peserta
                         </label>
 
                         <input id="participant-name" v-model="form.name" type="text" autocomplete="name"
-                            placeholder="Masukkan nama peserta" :aria-invalid="form.errors.name
-                                    ? 'true'
-                                    : 'false'
-                                "
-                            class="min-h-14 w-full rounded-2xl border bg-white px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-4"
-                            :class="form.errors.name
-                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                                    : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-100'
+                            placeholder="Masukkan nama peserta"
+                            class="min-h-14 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                            @input="
+                                form.clearErrors(
+                                    'name',
+                                )
                                 " />
-
-                        <p v-if="form.errors.name" class="mt-2 text-sm font-medium text-red-600">
-                            {{ form.errors.name }}
-                        </p>
                     </div>
 
                     <!-- Participant Code -->
+
                     <div>
                         <label for="participant-code" class="mb-2 block text-sm font-semibold text-slate-700">
                             Kode Peserta
                         </label>
 
                         <input id="participant-code" v-model="form.participant_code" type="text" autocomplete="off"
-                            autocapitalize="characters" spellcheck="false" placeholder="Contoh: 001" :aria-invalid="form.errors.participant_code
-                                    ? 'true'
-                                    : 'false'
-                                "
-                            class="min-h-14 w-full rounded-2xl border bg-white px-4 font-mono text-base font-bold uppercase tracking-wider text-slate-900 outline-none transition placeholder:font-sans placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-400 focus:ring-4"
-                            :class="form.errors.participant_code
-                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                                    : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-100'
+                            autocapitalize="characters" spellcheck="false" placeholder="Contoh: 001"
+                            class="min-h-14 w-full rounded-2xl border border-slate-300 bg-white px-4 font-mono text-base font-bold uppercase tracking-wider text-slate-900 outline-none transition placeholder:font-sans placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                            @input="
+                                form.clearErrors(
+                                    'participant_code',
+                                )
                                 " />
 
-                        <p v-if="!form.errors.participant_code" class="mt-2 text-xs leading-5 text-slate-500">
+                        <p class="mt-2 text-xs leading-5 text-slate-500">
                             Kode peserta harus unik di dalam room ini.
-                        </p>
-
-                        <p v-if="form.errors.participant_code" class="mt-2 text-sm font-medium text-red-600">
-                            {{ form.errors.participant_code }}
                         </p>
                     </div>
 
                     <!-- Submit -->
+
                     <button type="submit" :disabled="form.processing ||
                         !form.name.trim() ||
                         !form.participant_code.trim()
@@ -139,6 +155,7 @@
                                 fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
                                 stroke-linejoin="round" aria-hidden="true">
                                 <path d="M5 12h14" />
+
                                 <path d="m13 6 6 6-6 6" />
                             </svg>
                         </template>
